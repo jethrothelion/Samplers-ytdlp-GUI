@@ -1,18 +1,17 @@
+## Overview
+
+![Sample Image showing GUI](sample.png)
+
+Simple YtDLP GUI using java fx swing. has full access to ytdlp command suite by typing in manually while the buttons and text fields take care of simple usages. Also includes a timeline that will allow you to specify a specific time frame of the video to download
+
 ## Getting Started
 
-Welcome to the VS Code Java world. Here is a guideline to help you get started to write Java code in Visual Studio Code.
+Download the release for your specified version and run a file in there
 
-## Folder Structure
+ytdlp is included as it is platform independtend but you will have to grab the ffmpeg version for your os at https://ffmpeg.org/download.html.
 
-The workspace contains two folders by default, where:
+Either place the ffmpeg and ffprobe in /lib/app or in your systems enviroment variables
 
-- `src`: the folder to maintain sources
-- `lib`: the folder to maintain dependencies
 
-Meanwhile, the compiled output files will be generated in the `bin` folder by default.
 
-> If you want to customize the folder structure, open `.vscode/settings.json` and update the related settings there.
 
-## Dependency Management
-
-The `JAVA PROJECTS` view allows you to manage your dependencies. More details can be found [here](https://github.com/microsoft/vscode-java-dependency#manage-dependencies).

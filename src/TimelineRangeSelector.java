@@ -4,13 +4,17 @@ import java.awt.event.*;
 
 public class TimelineRangeSelector extends JPanel {
     
-    // The absolute percentages (0 to 100) are the single source of truth.
+    // The absolute percentages (0 to 100) are the default value
     private double leftPercent = 0.0;
     private double rightPercent = 100.0;
     
     // Dimensions for the draggable boxes
-    private final int boxWidth = 12;
-    private final int boxHeight = 40;
+    private final int boxWidth = 8;
+    private final int boxHeight = 20;
+
+    // Dimensions for the static grey bars at the ends
+    private final int endBarWidth = 4;
+    private final int endBarHeight = 24;
 
     private int videoDuration = -1; // -1 means unknown duration
     
@@ -48,20 +52,21 @@ public class TimelineRangeSelector extends JPanel {
             public void mouseDragged(MouseEvent e) {
                 if (activeBox == 0) return; 
 
-                int trackW = getWidth() - (2 * boxWidth);
+                int trackW = getWidth() - (2 * endBarWidth) - (2 * boxWidth);
                 if (trackW <= 0) return;
 
                 int targetPixel = e.getX() - dragOffset;
                 
                 if (activeBox == 1) {
+                    int minPixel = endBarWidth;
                     int maxPixel = getRightBoxX() - boxWidth;
-                    int boundedPixel = Math.max(0, Math.min(targetPixel, maxPixel));
-                    leftPercent = (boundedPixel / (double) trackW) * 100.0;
+                    int boundedPixel = Math.max(minPixel, Math.min(targetPixel, maxPixel));
+                    leftPercent = ((boundedPixel - endBarWidth) / (double) trackW) * 100.0;
                 } else if (activeBox == 2) {
                     int minPixel = getLeftBoxX() + boxWidth;
-                    int maxPixel = getWidth() - boxWidth;
+                    int maxPixel = getWidth() - endBarWidth - boxWidth;
                     int boundedPixel = Math.max(minPixel, Math.min(targetPixel, maxPixel));
-                    rightPercent = ((boundedPixel - boxWidth) / (double) trackW) * 100.0;
+                    rightPercent = ((boundedPixel - endBarWidth - boxWidth) / (double) trackW) * 100.0;
                 }
                 
                 repaint(); 
@@ -72,7 +77,16 @@ public class TimelineRangeSelector extends JPanel {
         addMouseMotionListener(mouseHandler);
     }
 
-    public double getDistanceFromLeft() {
+    public boolean isFullRangeSelected() 
+    {
+        if(leftPercent == 0.0 && rightPercent == 100.0)
+        {
+            return true;
+        }
+        else return false;
+    }
+
+    public double getStartTime() {
         if (videoDuration <= 0)
         {
             return leftPercent; //fallback when no ur\/duration
@@ -80,7 +94,7 @@ public class TimelineRangeSelector extends JPanel {
         return (leftPercent / 100.0) * videoDuration;
     }
     
-    public double getDistanceFromRight() {
+    public double getEndTime() {
         if (videoDuration <= 0)
         {
             return rightPercent;
@@ -89,15 +103,15 @@ public class TimelineRangeSelector extends JPanel {
     }
 
     private int getLeftBoxX() {
-        int trackW = getWidth() - (2 * boxWidth);
-        if (trackW <= 0) return 0;
-        return (int) ((leftPercent / 100.0) * trackW);
+        int trackW = getWidth() - (2 * endBarWidth) - (2 * boxWidth);
+        if (trackW <= 0) return endBarWidth;
+        return endBarWidth + (int) ((leftPercent / 100.0) * trackW);
     }
 
     private int getRightBoxX() {
-        int trackW = getWidth() - (2 * boxWidth);
-        if (trackW <= 0) return boxWidth;
-        return (int) ((rightPercent / 100.0) * trackW) + boxWidth;
+        int trackW = getWidth() - (2 * endBarWidth) - (2 * boxWidth);
+        if (trackW <= 0) return endBarWidth + boxWidth;
+        return endBarWidth + (int) ((rightPercent / 100.0) * trackW) + boxWidth;
     }
 
     private String formatTime(double percent)
@@ -141,25 +155,31 @@ public class TimelineRangeSelector extends JPanel {
         int rX = getRightBoxX();
         
         int centerY = (getHeight() - boxHeight) / 2;
+        int endBarY = (getHeight() - endBarHeight) / 2;
         int trackHeight = 10;
         int trackY = (getHeight() - trackHeight) / 2;
 
-        // 1. Draw the background timeline track (Light Gray)
-        g2d.setColor(Color.LIGHT_GRAY);
-        g2d.fillRect(0, trackY, getWidth(), trackHeight);
+        // 1. Draw the static grey bars at the extreme edges
+        g2d.setColor(Color.GRAY);
+        g2d.fillRect(0, endBarY, endBarWidth, endBarHeight);
+        g2d.fillRect(getWidth() - endBarWidth, endBarY, endBarWidth, endBarHeight);
 
-        // 2. Draw the highlighted "selected" range between the two boxes (Blue)
+        // 2. Draw the background timeline track (Light Gray) offset by endBarWidth
+        g2d.setColor(Color.LIGHT_GRAY);
+        g2d.fillRect(endBarWidth, trackY, getWidth() - (2 * endBarWidth), trackHeight);
+
+        // 3. Draw the highlighted "selected" range between the two boxes (Blue)
         g2d.setColor(new Color(100, 150, 255));
         int selectionStartX = lX + boxWidth;
         int selectionWidth = rX - selectionStartX;
         g2d.fillRect(selectionStartX, trackY, selectionWidth, trackHeight);
 
-        // 3. Draw the two draggable boxes (Dark Gray)
+        // 4. Draw the two draggable boxes (Dark Gray)
         g2d.setColor(Color.DARK_GRAY);
         g2d.fillRect(lX, centerY, boxWidth, boxHeight);
         g2d.fillRect(rX, centerY, boxWidth, boxHeight);
 
-        // 4. Draw the dynamic text above each box
+        // 5. Draw the dynamic text above each box
         g2d.setColor(Color.BLACK);
         g2d.setFont(new Font("Arial", Font.BOLD, 11));
         FontMetrics fm = g2d.getFontMetrics();
@@ -188,6 +208,7 @@ public class TimelineRangeSelector extends JPanel {
         g2d.drawString(leftText, leftTextX, leftTextY);
         g2d.drawString(rightText, rightTextX, rightTextY);
     }
+    
     public void setVideoDuration(double duration)
     {
         System.out.println("Grabbed video duration = " + duration);

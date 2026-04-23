@@ -16,9 +16,6 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.net.URI;
         
-        
-
-
 
 
 public class downloadGUI extends JFrame
@@ -39,12 +36,15 @@ public class downloadGUI extends JFrame
     TimelineRangeSelector timelineSelector;
 
     private int videoDuration = -1; // Duration in seconds, -1 means unknown
+    private boolean hasVerifiedExecutables = false; // Flag to prevent duplicate checks
 
+    private String cachedYtdlpPath = null;
+    private String cachedFfmpegPath = null;
 
     public void initialization()
     {
         // Basic window setup
-        setTitle("Media Downloader");
+        setTitle("Youtube Downloader");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(900, 500);
         setLayout(new GridBagLayout());
@@ -128,16 +128,19 @@ public class downloadGUI extends JFrame
         add(typePanel, gbc);
 
         // New button
-        JButton newButton = new JButton("Save Default");
-        newButton.setPreferredSize(new Dimension(20, 30));
+        JButton savePrefBttn = new JButton();
+
+        Icon saveIcon = getIcon("saveIcon.png");
+        savePrefBttn.setIcon(saveIcon);
+        savePrefBttn.setPreferredSize(new Dimension(20, 30));
         JPanel newButtonPanel = new JPanel(new GridBagLayout());
-        newButtonPanel.add(newButton);
+        newButtonPanel.add(savePrefBttn);
         gbc.gridx = 5;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
-        newButton.addActionListener(e -> {
+        savePrefBttn.addActionListener(e -> {
             setDefaults();
-            popupMessage("Settings saved as default!");
+
         });
 
         add(newButtonPanel, gbc);
@@ -155,7 +158,7 @@ public class downloadGUI extends JFrame
         folderSelectButton.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
 
-            chooser.setCurrentDirectory(new java.io.File("."));
+            chooser.setCurrentDirectory(new java.io.File(""));
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             
             if (chooser.showOpenDialog(folderSelectButton) == JFileChooser.APPROVE_OPTION) {
@@ -166,7 +169,8 @@ public class downloadGUI extends JFrame
             }
         });
 
-        Icon folderIcon = UIManager.getIcon("FileView.directoryIcon");
+        Icon folderIcon = getIcon("folderIcon.png");
+        
         folderSelectButton.setIcon(folderIcon);
         folderSelectButton.setBorder(new LineBorder(Color.BLACK, 2));
         folderSelectButton.setFont(new Font("Arial", Font.PLAIN, 12));
@@ -311,9 +315,6 @@ public class downloadGUI extends JFrame
         downloadBtn.setBackground(Color.GREEN);
         downloadBtn.setPreferredSize(new Dimension(5, 30));
         downloadBtn.addActionListener(e -> {
-            distanceFromLeft = timelineSelector.getDistanceFromLeft();
-            distanceFromRight = timelineSelector.getDistanceFromRight();
-
             startDownload(commandBar.getText());
         });
         gbc.gridx = 8;
@@ -329,9 +330,44 @@ public class downloadGUI extends JFrame
 
         readConfig();
 
+        // Run verification (Guaranteed to only run once)
+        runStartupChecks();
+
         setLocationRelativeTo(null);
         setVisible(true);
         
+    }
+
+    public Icon getIcon(String name)
+    {
+        //Takes path to icon returns Icon object
+
+        java.net.URL iconURL = getClass().getResource(name);
+
+        if(iconURL != null)
+        {
+            ImageIcon icon = new ImageIcon(iconURL);
+
+            Image scaledImage = icon.getImage().getScaledInstance(20, 20, java.awt.Image.SCALE_SMOOTH);
+
+            return new ImageIcon(scaledImage);
+        }
+        else
+        {
+            System.err.println("Warning: " + name + " not found in resources. Falling back to default.");
+            popupMessage("cant find " + name + " icon defaulting to os default save icon may not by there");
+            if (name.equals("folderIcon.png"))
+            {
+                return UIManager.getIcon("FileView.directoryIcon");
+            }
+            else if(name.equals("saveIcon.png"))
+            {
+                return UIManager.getIcon("FileView.floppyDriveIcon");
+            }
+
+            return null;
+        }
+
     }
 
     public void setDefaults()
@@ -367,6 +403,7 @@ public class downloadGUI extends JFrame
 
             // 3. Save the file to disk
             prop.store(out, "User Preferences");
+            popupMessage("Settings saved!");
             System.out.println("Settings saved to config.properties");
 
         } catch (IOException e) {
@@ -395,7 +432,12 @@ public class downloadGUI extends JFrame
             }
 
             //directory
-            selectedDirectory = prop.getProperty("directory");
+            File savedDir = new File(prop.getProperty("directory"));
+            if(savedDir.exists() && savedDir.isDirectory())
+            {   
+                
+                selectedDirectory = prop.getProperty("directory");
+            }
 
             //type
             String type = prop.getProperty("type");
@@ -408,36 +450,140 @@ public class downloadGUI extends JFrame
 
         } catch (IOException e) {
             System.out.println("No config file found, using defaults.");
+
+            videoBtn.setSelected(true);
         }
 
 
     }
+    
+    // Dedicated method to ensure checks only run once
+    private void runStartupChecks() {
+        if (hasVerifiedExecutables) {
+            return; // Exit immediately if already checked
+        }
+        
+        System.out.println("Running initial dependency checks...");
+        verifyExecutable(getYtdlpPath(), "--version", "yt-dlp");
+        verifyExecutable(getFFmpegPath(), "-version", "ffmpeg");
+        
+        hasVerifiedExecutables = true; // Mark as done so it never runs again
+    }
 
-    public String getExecutablePath() {
+    // New silent checker method that reads output to prevent process freezing
+    private boolean checkProcessSilently(String executableCmd, String versionFlag) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder(executableCmd, versionFlag);
+            pb.redirectErrorStream(true); // Combine stderr and stdout
+            Process process = pb.start();
+            
+            // CRUCIAL: Read and discard output. FFMPEG dumps a lot of text. 
+            // If we don't clear the buffer, Java blocks and the process hangs/fails.
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                while (br.readLine() != null) {
+                    // Do nothing, just empty the stream
+                }
+            }
+            
+            return process.waitFor() == 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean verifyExecutable(String path, String versionFlag, String appName)
+    {
+        // Check using the safe buffer-clearing method
+        if (checkProcessSilently(path, versionFlag)) {
+            return true;
+        }
+        
+        // Changed to a Warning instead of Error. yt-dlp might still find it even if Java struggles to verify it.
+        popupMessage("Warning: Could not verify " + appName + ".\nIt may not be in your system PATH or application folder. If downloads fail, please ensure it is installed.");
+        return false;
+    }
+
+    public String getYtdlpPath() {
+        //returns imediately if already been found
+        if (cachedYtdlpPath != null) {
+            return cachedYtdlpPath;
+        }
+
         String os = System.getProperty("os.name").toLowerCase();
-        String jarPath;
-        String executableName;
+        String executableName = os.contains("windows") ? "yt-dlp.exe" : "yt-dlp";
 
-        if(os.contains("windows"))
-        {
-            executableName = "yt-dlp.exe";
-        }
-        else
-        {
-            executableName = "yt-dlp";
-        }
         try
         {
             String classPath = downloadGUI.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
             File jarFile = new File(classPath);
-            jarPath = jarFile.getPath();
+            File jarDir = jarFile.getParentFile();
+            File executableFile = new File(jarDir, executableName);
+            
+            // 1. Try Folder First (Standard for yt-dlp)
+            if (executableFile.exists()) 
+            {
+                if (!executableFile.canExecute()) {
+                    executableFile.setExecutable(true);
+                }
+                cachedYtdlpPath = executableFile.getAbsolutePath();
+                return cachedYtdlpPath;
+            } 
         } catch (Exception e) {
             e.printStackTrace();
-            return executableName;
         }
-        
-        String executablePath = jarPath + File.separator + executableName;
-        return executablePath;
+
+        // 2. Try PATH if not found in folder
+        if (checkProcessSilently(executableName, "--version")) {
+            System.out.println("yt-dlp found in system PATH.");
+            cachedYtdlpPath = executableName;
+            return cachedYtdlpPath;
+        }
+
+        System.err.println("yt-dlp not found in folder or PATH.");
+        cachedYtdlpPath = executableName;
+        return cachedYtdlpPath; 
+    }
+
+    public String getFFmpegPath() {
+        // Return immediately if we already found it before
+        if (cachedFfmpegPath != null) {
+            return cachedFfmpegPath;
+        }
+
+        String os = System.getProperty("os.name").toLowerCase();
+        String executableName = os.contains("windows") ? "ffmpeg.exe" : "ffmpeg";
+
+        // 1. Try PATH First 
+        if (checkProcessSilently(executableName, "-version")) {
+            System.out.println("ffmpeg found in system PATH.");
+            cachedFfmpegPath = executableName;
+            return cachedFfmpegPath;
+        }
+
+        // 2. Try Folder if not found in PATH
+        try
+        {
+            String classPath = downloadGUI.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+            File jarFile = new File(classPath);
+            File jarDir = jarFile.getParentFile();
+            File executableFile = new File(jarDir, executableName);
+            
+            if (executableFile.exists()) 
+            {
+                if (!executableFile.canExecute()) {
+                    executableFile.setExecutable(true);
+                }
+                System.out.println("ffmpeg found in application folder.");
+                cachedFfmpegPath = executableFile.getAbsolutePath();
+                return cachedFfmpegPath;
+            } 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.err.println("ffmpeg not found in PATH or folder.");
+        cachedFfmpegPath = executableName;
+        return cachedFfmpegPath; 
     }
 
     private void fetchVideoDuration(String url) {
@@ -446,7 +592,7 @@ public class downloadGUI extends JFrame
             protected Integer doInBackground() throws Exception 
             {
                 try {
-                    ProcessBuilder pb = new ProcessBuilder(getExecutablePath(), url, "--print", "%(duration)s");
+                    ProcessBuilder pb = new ProcessBuilder(getYtdlpPath(), url, "--print", "%(duration)s");
                     Process process = pb.start();
                     BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()));
                     BufferedReader stderr = new BufferedReader(new InputStreamReader(process.getErrorStream()));
@@ -497,7 +643,16 @@ public class downloadGUI extends JFrame
     {
         List<String> command = new ArrayList<>();
 
-        command.add(getExecutablePath()); // Add the executable path first
+        command.add(getYtdlpPath()); // Add the executable path first
+
+        // Point yt-dlp to the specific bundled ffmpeg location
+        String ffmpegLocation = getFFmpegPath();
+        // if contains file separator we know its not the path variable
+        if (ffmpegLocation.contains(File.separator))
+        {
+            command.add("--ffmpeg-location");
+            command.add("\"" + ffmpegLocation + "\"");
+        }
 
         String url = urlField.getText();
         if (!url.isEmpty() && !url.equals("Enter URL")) {
@@ -523,9 +678,11 @@ public class downloadGUI extends JFrame
             command.add("mp3");
         }
         
-        if (timelineSelector.getDistanceFromLeft() > 0) {
+        //if not full range selected
+        if(!timelineSelector.isFullRangeSelected())
+        {
             command.add("--download-sections");
-            command.add("\"-ss " + (timelineSelector.getDistanceFromLeft()) + "\"");
+            command.add("\"* " + (timelineSelector.getStartTime()) + "-" + (timelineSelector.getEndTime()) + "\"");
         }
 
         //quality options
@@ -536,6 +693,9 @@ public class downloadGUI extends JFrame
         } else if (lowestButton.isSelected()) {
             command.add(audioBtn.isSelected() ? "-f worstaudio " : "-f worstvideo+worstaudio ");
         }
+
+
+
 
         commandBar.setText(String.join(" ", command).trim());  
     
