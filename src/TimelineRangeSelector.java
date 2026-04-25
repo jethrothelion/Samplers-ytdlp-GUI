@@ -70,6 +70,8 @@ public class TimelineRangeSelector extends JPanel {
                 }
                 
                 repaint(); 
+
+                TimelineRangeSelector.this.firePropertyChange("rangeChanged", false, true);
             }
         };
         
@@ -80,7 +82,7 @@ public class TimelineRangeSelector extends JPanel {
     public boolean isFullRangeSelected() 
     {
         if(leftPercent == 0.0 && rightPercent == 100.0)
-        {
+        {   
             return true;
         }
         else return false;
@@ -89,9 +91,9 @@ public class TimelineRangeSelector extends JPanel {
     public double getStartTime() {
         if (videoDuration <= 0)
         {
-            return leftPercent; //fallback when no ur\/duration
+            return leftPercent; //fallback when no url/duration
         }
-        return (leftPercent / 100.0) * videoDuration;
+        return (int) (leftPercent / 100.0) * videoDuration;
     }
     
     public double getEndTime() {
@@ -99,19 +101,19 @@ public class TimelineRangeSelector extends JPanel {
         {
             return rightPercent;
         }
-        return (rightPercent / 100.0) * videoDuration;
+        return (int) (rightPercent / 100.0) * videoDuration;
     }
 
     private int getLeftBoxX() {
         int trackW = getWidth() - (2 * endBarWidth) - (2 * boxWidth);
         if (trackW <= 0) return endBarWidth;
-        return endBarWidth + (int) ((leftPercent / 100.0) * trackW);
+        return endBarWidth + (int) ((leftPercent / 100) * trackW);
     }
 
     private int getRightBoxX() {
         int trackW = getWidth() - (2 * endBarWidth) - (2 * boxWidth);
         if (trackW <= 0) return endBarWidth + boxWidth;
-        return endBarWidth + (int) ((rightPercent / 100.0) * trackW) + boxWidth;
+        return endBarWidth + (int) ((rightPercent / 100) * trackW) + boxWidth;
     }
 
     private String formatTime(double percent)
