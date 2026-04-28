@@ -1,8 +1,15 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.awt.Image;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
+import javax.swing.UIManager;
 
 public class DependencyLocator 
+// has getDependancyPath(base command, --specific version flag) for every dependancy nessicary,
+// methods returns path to dependancy or a image object in the case of icons
 {
     private String cachedYtdlpPath = null;
     private String cachedFfmpegPath = null;
@@ -110,5 +117,59 @@ public class DependencyLocator
         System.err.println("ffmpeg not found in PATH or folder.");
         cachedFfmpegPath = executableName;
         return cachedFfmpegPath; 
+    }
+
+    public Icon getIcon(String name)
+    {
+        //Takes path to icon returns Icon object
+
+        // 1. Try to load from the executable/jar folder (same logic as yt-dlp)
+        try
+        {
+            // CHANGED: DownloadGUI.class to DependencyLocator.class
+            String classPath = DependencyLocator.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+            File jarFile = new File(classPath);
+            File jarDir = jarFile.getParentFile();
+            File iconFile = new File(jarDir, name);
+            
+            if (iconFile.exists()) 
+            {
+                ImageIcon icon = new ImageIcon(iconFile.getAbsolutePath());
+                Image scaledImage = icon.getImage().getScaledInstance(20, 20, java.awt.Image.SCALE_SMOOTH);
+                return new ImageIcon(scaledImage);
+            } 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // 2. Fallback to the internal resource method
+        java.net.URL iconURL = getClass().getResource(name);
+
+        if(iconURL != null)
+        {
+            ImageIcon icon = new ImageIcon(iconURL);
+
+            Image scaledImage = icon.getImage().getScaledInstance(20, 20, java.awt.Image.SCALE_SMOOTH);
+
+            return new ImageIcon(scaledImage);
+        }
+        else
+        {
+            System.err.println("Warning: " + name + " not found in resources. Falling back to default.");
+            
+            // CHANGED: Replaced popupMessage() with JOptionPane passing null for the parent component
+            JOptionPane.showMessageDialog(null, "cant find " + name + " icon defaulting to os default save icon may not by there");
+            
+            if (name.equals("folderIcon.png"))
+            {
+                return UIManager.getIcon("FileView.directoryIcon");
+            }
+            else if(name.equals("saveIcon.png"))
+            {
+                return UIManager.getIcon("FileView.floppyDriveIcon");
+            }
+
+            return null;
+        }
     }
 }

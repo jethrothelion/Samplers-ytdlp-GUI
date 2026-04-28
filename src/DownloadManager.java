@@ -6,9 +6,8 @@ import java.util.List;
 import java.util.regex.Matcher; import java.util.regex.Pattern;
 
 public class DownloadManager
+//Holds as much of the download handelling as feasable
 {
-
-
     public void Download(String commandLine, DownloadListener listener)
     {
     
@@ -104,6 +103,7 @@ public class DownloadManager
     }
     public String calcutateObjective(String ytDlpOutput)
     {
+        // this regex looks for any charecters inbetween [] 
         Pattern pattern = Pattern.compile("\\[(.*?)\\]");
         Matcher matcher = pattern.matcher(ytDlpOutput); 
         if (matcher.find()) 

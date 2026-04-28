@@ -2,7 +2,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
-public class TimelineRangeSelector extends JPanel {
+public class TimelineRangeSelector extends JPanel
+// Handles the formation of the timeline and grabs values from it.
+{
     
     // The absolute percentages (0 to 100) are the default value
     private double leftPercent = 0.0;
@@ -93,7 +95,7 @@ public class TimelineRangeSelector extends JPanel {
         {
             return leftPercent; //fallback when no url/duration
         }
-        return (int) (leftPercent / 100.0) * videoDuration;
+        return (int) ((leftPercent / 100.0) * videoDuration);
     }
     
     public double getEndTime() {
@@ -101,7 +103,7 @@ public class TimelineRangeSelector extends JPanel {
         {
             return rightPercent;
         }
-        return (int) (rightPercent / 100.0) * videoDuration;
+        return (int) ((rightPercent / 100.0) * videoDuration);
     }
 
     private int getLeftBoxX() {

@@ -18,6 +18,8 @@ import java.net.URI;
         
 
 public class DownloadGUI extends JFrame
+// Too long of a class that makes the GUI and handles some logic as well such as config and
+// construct command and get video length
 {
     private String selectedDirectory;
     private JLabel downloadMessage;
@@ -44,7 +46,7 @@ public class DownloadGUI extends JFrame
 
     private DependencyLocator locator = new DependencyLocator();
     
-    // CHANGED: Added a debounce timer to prevent spamming yt-dlp processes
+    // prevent spamming yt-dlp processes
     private Timer urlDebounceTimer; 
 
     public void initialization()
@@ -63,8 +65,10 @@ public class DownloadGUI extends JFrame
         urlField = new JTextField("Enter URL");
         urlField.setBorder(new LineBorder(Color.BLACK, 2));
         urlField.setForeground(Color.GRAY); 
+
         
-        // CHANGED: Setup debounce timer so it only fetches duration 1 second AFTER typing stops
+        
+        // Setup debounce timer so it only fetches duration 1 second AFTER typing stops
         urlDebounceTimer = new Timer(1000, e -> {
             if (urlField.getText().contains("youtube.com"))
             {
@@ -76,13 +80,13 @@ public class DownloadGUI extends JFrame
         // Listen for typing in the URL field to update the timeline selector's max range 
         urlField.getDocument().addDocumentListener(new DocumentListener() {
             public void changedUpdate(DocumentEvent e) { 
-                urlDebounceTimer.restart(); // CHANGED: Restarts the countdown instead of instantly spawning process
+                urlDebounceTimer.restart(); // Restarts the countdown instead of instantly spawning process
             }
             public void removeUpdate(DocumentEvent e) { 
-                urlDebounceTimer.restart(); // CHANGED
+                urlDebounceTimer.restart();
             }
             public void insertUpdate(DocumentEvent e) { 
-                urlDebounceTimer.restart(); // CHANGED
+                urlDebounceTimer.restart(); 
             }
         });
 
@@ -134,7 +138,7 @@ public class DownloadGUI extends JFrame
         // New button
         JButton savePrefBttn = new JButton();
 
-        Icon saveIcon = getIcon("saveIcon.png");
+        Icon saveIcon = locator.getIcon("saveIcon.png");
         savePrefBttn.setIcon(saveIcon);
         savePrefBttn.setPreferredSize(new Dimension(20, 30));
         JPanel newButtonPanel = new JPanel(new GridBagLayout());
@@ -143,7 +147,7 @@ public class DownloadGUI extends JFrame
         gbc.gridwidth = 1;
         gbc.weightx = 0;
         savePrefBttn.addActionListener(e -> {
-            setDefaults();
+            saveConfig();
 
         });
 
@@ -160,21 +164,40 @@ public class DownloadGUI extends JFrame
         // Directory choosing button
         JButton folderSelectButton = new JButton("Select Folder");
         folderSelectButton.addActionListener(e -> {
-            JFileChooser chooser = new JFileChooser();
-
-            chooser.setCurrentDirectory(new java.io.File(""));
-            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             
-            if (chooser.showOpenDialog(folderSelectButton) == JFileChooser.APPROVE_OPTION) {
-                selectedDirectory = chooser.getSelectedFile().getAbsolutePath();
-                System.out.println("Selected folder: " + selectedDirectory);
-            } else {
-                System.out.println("No folder selected");
+            try {
+                // 1. Save the current Java Look and Feel
+                LookAndFeel previousLF = UIManager.getLookAndFeel();
+                
+                // 2. Temporarily switch to the Native OS Look and Feel
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                
+                // 3. Create and show the JFileChooser
+                JFileChooser chooser = new JFileChooser();
+                chooser.setCurrentDirectory(new java.io.File(""));
+                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                
+                int result = chooser.showOpenDialog(folderSelectButton);
+                
+                // 4. Immediately switch back to the original Java Look and Feel
+                UIManager.setLookAndFeel(previousLF);
+                
+                // Process the result
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    selectedDirectory = chooser.getSelectedFile().getAbsolutePath();
+                    System.out.println("Selected folder: " + selectedDirectory);
+                } else {
+                    System.out.println("No folder selected");
+                }
+            } catch (Exception ex) {
+                System.err.println("Failed to swap Look and Feel for file chooser.");
+                ex.printStackTrace();
             }
+
             constructCommand();
         });
 
-        Icon folderIcon = getIcon("folderIcon.png");
+        Icon folderIcon = locator.getIcon("folderIcon.png");
         
         folderSelectButton.setIcon(folderIcon);
         folderSelectButton.setBorder(new LineBorder(Color.BLACK, 2));
@@ -215,11 +238,10 @@ public class DownloadGUI extends JFrame
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 try {
-                    // Put your desired URL inside the quotes below
                     Desktop.getDesktop().browse(new URI("https://github.com/yt-dlp/yt-dlp"));
                 } catch (Exception ex) {
                     ex.printStackTrace();
-                    popupMessage("Could not open the link."); // Optional error popup
+                    popupMessage("Could not open the link, sorry: " + ex); 
                 }
             }
         });
@@ -259,7 +281,7 @@ public class DownloadGUI extends JFrame
         
         highestButton = new JRadioButton("Highest quality");
         highestButton.setActionCommand("3");
-        highestButton.setSelected(true); // CHANGED: Replaced typo 'rootPaneCheckingEnabled' with 'true'
+        highestButton.setSelected(true); 
 
         mediumButton = new JRadioButton("Medium quality");
         mediumButton.setActionCommand("2");
@@ -407,65 +429,16 @@ public class DownloadGUI extends JFrame
         
     }
 
-public Icon getIcon(String name)
-    {
-        //Takes path to icon returns Icon object
+    String configPath = System.getProperty("user.home") + File.separator + "YoutubeDownloaderConfig.properties";
 
-        // 1. Try to load from the executable/jar folder (same logic as yt-dlp)
-        try
-        {
-            String classPath = DownloadGUI.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
-            File jarFile = new File(classPath);
-            File jarDir = jarFile.getParentFile();
-            File iconFile = new File(jarDir, name);
-            
-            if (iconFile.exists()) 
-            {
-                ImageIcon icon = new ImageIcon(iconFile.getAbsolutePath());
-                Image scaledImage = icon.getImage().getScaledInstance(20, 20, java.awt.Image.SCALE_SMOOTH);
-                return new ImageIcon(scaledImage);
-            } 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // 2. Fallback to the internal resource method
-        java.net.URL iconURL = getClass().getResource(name);
-
-        if(iconURL != null)
-        {
-            ImageIcon icon = new ImageIcon(iconURL);
-
-            Image scaledImage = icon.getImage().getScaledInstance(20, 20, java.awt.Image.SCALE_SMOOTH);
-
-            return new ImageIcon(scaledImage);
-        }
-        else
-        {
-            System.err.println("Warning: " + name + " not found in resources. Falling back to default.");
-            popupMessage("cant find " + name + " icon defaulting to os default save icon may not by there");
-            if (name.equals("folderIcon.png"))
-            {
-                return UIManager.getIcon("FileView.directoryIcon");
-            }
-            else if(name.equals("saveIcon.png"))
-            {
-                return UIManager.getIcon("FileView.floppyDriveIcon");
-            }
-
-            return null;
-        }
-
-    }
-
-    public void setDefaults()
+    public void saveConfig()
     {
         Properties prop = new Properties();
 
-        // Use FileOutputStream to create/overwrite the config file
-        try (FileOutputStream out = new FileOutputStream("config.properties")) 
+        
+        try (FileOutputStream out = new FileOutputStream(configPath)) 
         {
-            // 1. Get the propertys from the radio buttons
+            // Get the propertys from the radio buttons
 
             //quality
             String quality = "3"; // Defaults to highest
@@ -509,7 +482,7 @@ public Icon getIcon(String name)
 
         Properties prop = new Properties();
         // Load the file
-        try (FileInputStream in = new FileInputStream("config.properties")) {
+        try (FileInputStream in = new FileInputStream(configPath)) {
             prop.load(in);
 
             //quality
@@ -641,7 +614,6 @@ public Icon getIcon(String name)
 
         command.add(locator.getYtdlpPath()); // Add the executable path first
 
-        // Point yt-dlp to the specific bundled ffmpeg location
         String ffmpegLocation = locator.getFFmpegPath();
         // if contains file separator we know its not the path variable
         if (ffmpegLocation.contains(File.separator))
@@ -662,11 +634,9 @@ public Icon getIcon(String name)
         if(selectedDirectory != null && !selectedDirectory.isEmpty())
         {
             command.add("-o");
-            // CHANGED: Added surrounding quotes to prevent breaking on spaces in folder names
             command.add("\"" + selectedDirectory + File.separator + "%(title)s.%(ext)s" + "\"");
         } else {
             command.add("-o");
-            // CHANGED: Added surrounding quotes here as well for safety
             command.add("\"%(title)s.%(ext)s\"");
         }
         
@@ -681,11 +651,10 @@ public Icon getIcon(String name)
         if(!timelineSelector.isFullRangeSelected())
         {
             command.add("--download-sections");
-            command.add("\"* " + (timelineSelector.getStartTime()) + "-" + (timelineSelector.getEndTime()) + "\"");
+            command.add("\"*" + (int)(timelineSelector.getStartTime()) + "-" + (int)(timelineSelector.getEndTime()) + "\"");
         }
 
         //quality options
-        // CHANGED: Split the flag strings to prevent weird spaces formatting in the text field 
         if (highestButton.isSelected()) {
             command.add("-f");
             command.add(audioBtn.isSelected() ? "bestaudio" : "bestvideo+bestaudio");
