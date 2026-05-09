@@ -165,6 +165,7 @@ public class DownloadGUI extends JFrame
         JButton folderSelectButton = new JButton("Select Folder");
         folderSelectButton.addActionListener(e -> {
             
+            // grabs and use OS file explorer instead of the java fx default. basically switches from java fx ui building to os, then run folder explorer ui update then switch back on close
             try {
                 // 1. Save the current Java Look and Feel
                 LookAndFeel previousLF = UIManager.getLookAndFeel();
@@ -612,6 +613,8 @@ public class DownloadGUI extends JFrame
     {
         List<String> command = new ArrayList<>();
 
+        StringBuffer fileName = new StringBuffer("%(title)s.%(ext)s");
+
         command.add(locator.getYtdlpPath()); // Add the executable path first
 
         String ffmpegLocation = locator.getFFmpegPath();
@@ -631,14 +634,6 @@ public class DownloadGUI extends JFrame
             command.add("\"url\"");
         }
 
-        if(selectedDirectory != null && !selectedDirectory.isEmpty())
-        {
-            command.add("-o");
-            command.add("\"" + selectedDirectory + File.separator + "%(title)s.%(ext)s" + "\"");
-        } else {
-            command.add("-o");
-            command.add("\"%(title)s.%(ext)s\"");
-        }
         
         if (audioBtn.isSelected())
         {
@@ -650,8 +645,14 @@ public class DownloadGUI extends JFrame
         //if not full range selected
         if(!timelineSelector.isFullRangeSelected())
         {
+            String length = (int)(timelineSelector.getStartTime()) + "-" + (int)(timelineSelector.getEndTime());
+
             command.add("--download-sections");
-            command.add("\"*" + (int)(timelineSelector.getStartTime()) + "-" + (int)(timelineSelector.getEndTime()) + "\"");
+            command.add("\"*" + length + "\"");
+
+            fileName.append(length);
+
+            
         }
 
         //quality options
@@ -664,6 +665,15 @@ public class DownloadGUI extends JFrame
         } else if (lowestButton.isSelected()) {
             command.add("-f");
             command.add(audioBtn.isSelected() ? "worstaudio" : "worstvideo+worstaudio");
+        }
+
+        if(selectedDirectory != null && !selectedDirectory.isEmpty())
+        {
+            command.add("-o");
+            command.add(File.separator + selectedDirectory + File.separator + "\"" + fileName.toString() + "\"" + File.separator);
+        } else {
+            command.add("-o");
+            command.add("\"" + fileName.toString() + "\"");
         }
 
         commandBar.setText(String.join(" ", command).trim());  
