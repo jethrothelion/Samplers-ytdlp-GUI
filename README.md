@@ -6,11 +6,29 @@ Simple YtDLP GUI using java fx swing. has full access to ytdlp command suite by 
 
 ## Getting Started
 
-Download the release for your specified version and run a file in there
+Download the release for your specified version and run the file
 
-ytdlp is included as it is platform independtend but you will have to grab the ffmpeg version for your os at https://ffmpeg.org/download.html.
+installs to program files on windows or opt on linux
 
-Either place the ffmpeg and ffprobe in /lib/app or in your systems enviroment variables
+Has everything you need to get going, if you expereince error run it from the terminal and it will output more debugging information
+
+
+## Features
+
+Fully editable command line for ytdlp so any agrument that ytdlp supports you can use in the gui.
+
+Hyper link to ytdlps argument page for easy access.
+
+intuitive button layout that add arguments for the base level functions for ytdlp.
+
+A timeline that visualizes the section the user would like to download.
+
+Config saving, saves weather you want to use audio or video, what level quality, weather you want to see the console output or not and also saves the dimensions of the window
+
+## Running from source
+
+You can also run it from source but you need to have ffmpeg and ytdlp for your os either in your path or in the classes path
+
 
 
 
