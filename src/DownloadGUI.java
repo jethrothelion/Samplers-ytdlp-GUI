@@ -34,6 +34,7 @@ public class DownloadGUI extends JFrame
     private double distanceFromLeft;
     private double distanceFromRight;
     private JLabel progressLabel;
+    private JButton downloadBtn;
     TimelineRangeSelector timelineSelector;
 
     private JTextArea logArea;
@@ -400,7 +401,7 @@ public class DownloadGUI extends JFrame
 
 
         // Download Button
-        JButton downloadBtn = new JButton("DOWNLOAD");
+        downloadBtn = new JButton("DOWNLOAD");
         downloadBtn.setForeground(new Color(0, 0, 0));
         downloadBtn.setBorder(new LineBorder(new Color(0, 153, 51), 3));
         downloadBtn.setFont(new Font("Arial", Font.BOLD, 16));
@@ -424,7 +425,7 @@ public class DownloadGUI extends JFrame
 
         // Run verification (Guaranteed to only run once)
         runStartupChecks();
-
+        
         setLocationRelativeTo(null);
         setVisible(true);
         
@@ -703,10 +704,33 @@ public class DownloadGUI extends JFrame
         JOptionPane.showMessageDialog(this, message);
     }
 
+    private void changeDownloadButton(boolean state)
+    {
+        if(state == false)
+        {
+
+            downloadBtn.setText("ABORT");
+            downloadBtn.setForeground(Color.white);
+            downloadBtn.setBackground(new Color(200, 0, 0));
+            downloadBtn.setBorder(new LineBorder(new Color(150, 0, 0), 3));
+        }
+
+        if(state == true)
+        {
+            downloadBtn.setText("DOWNLOAD");
+            downloadBtn.setForeground(new Color(0, 0, 0));
+            downloadBtn.setBackground(Color.GREEN);
+            downloadBtn.setBorder(new LineBorder(new Color(0, 153, 51), 3));
+
+        }
+    }
+
     public void startDownload(String command)
     {
         System.out.println("Starting download with command: " + command);
         
+        changeDownloadButton(false);
+
         SwingWorker<Void, Integer> downloadWorker = new SwingWorker<Void, Integer>() {
             @Override
             protected Void doInBackground() throws Exception 
@@ -737,7 +761,8 @@ public class DownloadGUI extends JFrame
                                 logArea.append("--- DOWNLOAD FAILED ---\n");
                                 popupMessage("Download failed, Check the console for details.");
                                 progressBar.setValue(0);
-                            }   
+                            }
+                            changeDownloadButton(true);   
                         });
                     }
 
