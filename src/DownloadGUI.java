@@ -363,11 +363,19 @@ public class DownloadGUI extends JFrame
         // Action to show/hide the console text box
         toggleLogBtn.addActionListener(e -> {
             boolean isCurrentlyVisible = logScrollPane.isVisible();
+
+            GridBagLayout layout = (GridBagLayout) getContentPane().getLayout();
+            GridBagConstraints logGbc = layout.getConstraints(logWrapperPanel);
+
             if (isCurrentlyVisible) {
                 // About to hide: Save its exact height, then subtract it from the window
                 savedLogHeight = logScrollPane.getHeight();
                 logScrollPane.setVisible(false);
                 toggleLogBtn.setText("Show Console");
+
+                // Remove weighty so the wrapper panel stops requesting leftover vertical space
+                logGbc.weighty = 0.0;
+                layout.setConstraints(logWrapperPanel, logGbc);
                 
                 // Subtract height, keep current width
                 setSize(getWidth(), getHeight() - savedLogHeight); 
@@ -375,6 +383,10 @@ public class DownloadGUI extends JFrame
                 // About to show: Add the saved height back to the window
                 logScrollPane.setVisible(true);
                 toggleLogBtn.setText("Hide Console");
+
+                // Restore the original weighty so the console can expand again
+                logGbc.weighty = 0.5;
+                layout.setConstraints(logWrapperPanel, logGbc);
                 
                 // Add height, keep current width
                 setSize(getWidth(), getHeight() + savedLogHeight);
@@ -382,8 +394,8 @@ public class DownloadGUI extends JFrame
             
             // Force the layout to update inside the new window size
 
-            logWrapperPanel.revalidate();
-            logWrapperPanel.repaint();
+            revalidate();
+            repaint();
         });
         
         buttonWrapper.add(toggleLogBtn);
