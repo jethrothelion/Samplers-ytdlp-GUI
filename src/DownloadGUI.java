@@ -46,6 +46,7 @@ public class DownloadGUI extends JFrame
     private boolean hasVerifiedExecutables = false; // Flag to prevent duplicate checks
 
     private DependencyLocator locator = new DependencyLocator();
+    private DownloadManager downloader;
     
     // prevent spamming yt-dlp processes
     private Timer urlDebounceTimer; 
@@ -718,6 +719,10 @@ public class DownloadGUI extends JFrame
 
     private void changeDownloadButton(boolean state)
     {
+        // Loop through and remove all old click events so they don't stack up
+        for (java.awt.event.ActionListener al : downloadBtn.getActionListeners()) {
+            downloadBtn.removeActionListener(al);
+        }
         if(state == false)
         {
 
@@ -725,6 +730,8 @@ public class DownloadGUI extends JFrame
             downloadBtn.setForeground(Color.white);
             downloadBtn.setBackground(new Color(200, 0, 0));
             downloadBtn.setBorder(new LineBorder(new Color(150, 0, 0), 3));
+            downloadBtn.addActionListener(e -> {downloader.abortDownload();});
+                
         }
 
         if(state == true)
@@ -733,9 +740,11 @@ public class DownloadGUI extends JFrame
             downloadBtn.setForeground(new Color(0, 0, 0));
             downloadBtn.setBackground(Color.GREEN);
             downloadBtn.setBorder(new LineBorder(new Color(0, 153, 51), 3));
+            downloadBtn.addActionListener(e -> {startDownload(commandBar.getText());});
+        };
 
-        }
     }
+    
 
     public void startDownload(String command)
     {
@@ -747,7 +756,7 @@ public class DownloadGUI extends JFrame
             @Override
             protected Void doInBackground() throws Exception 
             {
-                DownloadManager downloader = new DownloadManager();
+                downloader = new DownloadManager();
                 downloader.Download(command, new DownloadListener()
                 {
                     @Override

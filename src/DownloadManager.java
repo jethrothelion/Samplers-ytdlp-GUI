@@ -8,6 +8,8 @@ import java.util.regex.Matcher; import java.util.regex.Pattern;
 public class DownloadManager
 //Holds as much of the download handelling as feasable
 {
+    private Process activeProcess;
+
     public void Download(String commandLine, DownloadListener listener)
     {
     
@@ -30,10 +32,10 @@ public class DownloadManager
         processBuilder.command(command);
 
         try {
-            Process process = processBuilder.start();
+            activeProcess = processBuilder.start();
 
             new Thread(() -> {
-                try (BufferedReader stderr = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                try (BufferedReader stderr = new BufferedReader(new InputStreamReader(activeProcess.getErrorStream()))) {
                     String errorLine;
                     while ((errorLine = stderr.readLine()) != null) {
                         System.err.println("yt-dlp Error: " + errorLine);
@@ -49,7 +51,7 @@ public class DownloadManager
             }).start();
             
 
-            BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader stdout = new BufferedReader(new InputStreamReader(activeProcess.getInputStream()));
             String outputLine;
             while ((outputLine = stdout.readLine()) != null) {
                 listener.onOutput(outputLine);
@@ -62,7 +64,7 @@ public class DownloadManager
                 }
             }
 
-            int exitCode = process.waitFor();
+            int exitCode = activeProcess.waitFor();
             if (exitCode == 0) {
                 System.out.println("Download completed successfully.");
                 if (listener != null) {
@@ -79,6 +81,13 @@ public class DownloadManager
         }
     }
 
+    public void abortDownload()
+    {
+        if (activeProcess != null && activeProcess.isAlive())
+        {
+            activeProcess.destroyForcibly();
+        }
+    }
 
 
     public int calculateProgress(String ytDlpOutput)
