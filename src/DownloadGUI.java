@@ -735,7 +735,10 @@ public class DownloadGUI extends JFrame
             downloadBtn.setForeground(Color.white);
             downloadBtn.setBackground(new Color(200, 0, 0));
             downloadBtn.setBorder(new LineBorder(new Color(150, 0, 0), 3));
-            downloadBtn.addActionListener(e -> {downloader.abortDownload();});
+            downloadBtn.addActionListener(e ->
+                {downloader.abortDownload();
+                progressLabel.setText("Aborting or aborted");
+            });
                 
         }
 
