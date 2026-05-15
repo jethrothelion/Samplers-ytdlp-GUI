@@ -24,8 +24,10 @@ public class DownloadManager
         }
         
         // Debugging print to prove the string was chopped up correctly
-        System.out.println("Parsed Executable: " + command.get(0));
-        System.out.println("Total Arguments: " + (command.size() - 1));
+        if (listener != null) {
+            listener.onOutput("Parsed Executable: " + command.get(0));
+            listener.onOutput("Total Arguments: " + (command.size() - 1));
+        }
 
 
         ProcessBuilder processBuilder = new ProcessBuilder();
@@ -38,14 +40,13 @@ public class DownloadManager
                 try (BufferedReader stderr = new BufferedReader(new InputStreamReader(activeProcess.getErrorStream()))) {
                     String errorLine;
                     while ((errorLine = stderr.readLine()) != null) {
-                        System.err.println("yt-dlp Error: " + errorLine);
-
-                        if (errorLine.toLowerCase().contains("error") && listener!=null)
+                        if(listener != null)
                         {
-                            listener.onError(errorLine);
+                            listener.onOutput("yt-dlp Log/Error: " + commandLine);
                         }
                     }
                 } catch (Exception e) {
+                    if (listener != null) listener.onOutput("Thread Exception: " + e.getMessage());
                     e.printStackTrace();
                 }
             }).start();
@@ -68,11 +69,13 @@ public class DownloadManager
             if (exitCode == 0) {
                 System.out.println("Download completed successfully.");
                 if (listener != null) {
+                    listener.onOutput("Download completed successfully");
                     listener.onComplete(true);
                 }
             } else {
                 System.out.println("Download failed with exit code: " + exitCode);
                 if (listener != null) {
+                    listener.onOutput("Download failed with exit code: " + exitCode);
                     listener.onComplete(false);
                 }
             }
@@ -85,7 +88,7 @@ public class DownloadManager
     {
         if (activeProcess != null && activeProcess.isAlive())
         {
-            activeProcess.destroyForcibly();
+            activeProcess.destroy();
         }
     }
 

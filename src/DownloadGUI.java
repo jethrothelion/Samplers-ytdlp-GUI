@@ -188,12 +188,15 @@ public class DownloadGUI extends JFrame
                 // Process the result
                 if (result == JFileChooser.APPROVE_OPTION) {
                     selectedDirectory = chooser.getSelectedFile().getAbsolutePath();
-                    System.out.println("Selected folder: " + selectedDirectory);
+                    String message = "Selected folder: " + selectedDirectory;
+                    System.out.println(message);
+                    logArea.append(message);
                 } else {
                     System.out.println("No folder selected");
                 }
             } catch (Exception ex) {
-                System.err.println("Failed to swap Look and Feel for file chooser.");
+                System.err.println("Failed to swap Style, Look and Feel for file chooser.");
+                logArea.append("Failed to swap Style, Look and Feel for file chooser.");
                 ex.printStackTrace();
             }
 
@@ -482,8 +485,8 @@ public class DownloadGUI extends JFrame
 
             // Save the file to disk
             prop.store(out, "User Preferences");
-            popupMessage("Settings saved!");
             System.out.println("Settings saved to config.properties");
+            logArea.append("Settings saved to config.properties");
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -538,6 +541,7 @@ public class DownloadGUI extends JFrame
 
         } catch (IOException e) {
             System.out.println("No config file found, using defaults.");
+            popupMessage("No Config file found, using defaults");
             setSize(900,550);
 
             videoBtn.setSelected(true);
@@ -599,6 +603,7 @@ public class DownloadGUI extends JFrame
                         return (int) Double.parseDouble(line.trim());
                     }
                 } catch (Exception e) {
+                    logArea.append("Error in duration fetch: " + e.getMessage() + "\n");
                     e.printStackTrace();
                 }
                 return -1;
@@ -748,7 +753,9 @@ public class DownloadGUI extends JFrame
 
     public void startDownload(String command)
     {
-        System.out.println("Starting download with command: " + command);
+        String commandMsg = "Starting download with command: " + command;
+        System.out.println(commandMsg);
+        logArea.append(commandMsg);
         
         changeDownloadButton(false);
 
