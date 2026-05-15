@@ -4,6 +4,4 @@ public interface DownloadListener {
     void onComplete(boolean success);
     void onOutput(String output);
     void onMessage(String message);
-    
-    
 }

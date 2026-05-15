@@ -150,7 +150,6 @@ public class TimelineRangeSelector extends JPanel
         
         if (getWidth() <= 0) return;
 
-        // Turn on Anti-Aliasing for smooth shapes and text
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -215,7 +214,7 @@ public class TimelineRangeSelector extends JPanel
     
     public void setVideoDuration(double duration)
     {
-        System.out.println("Grabbed video duration = " + duration);
+        System.out.println("Grabbed video duration = " + duration + " seconds");
 
         this.videoDuration = (int) duration;
         repaint();
