@@ -247,6 +247,7 @@ public class DownloadGUI extends JFrame
                     Desktop.getDesktop().browse(new URI("https://github.com/yt-dlp/yt-dlp"));
                 } catch (Exception ex) {
                     ex.printStackTrace();
+                    logArea.append(ex.toString() +"\n");
                     popupMessage("Could not open the link, sorry: " + ex); 
                 }
             }
@@ -490,6 +491,7 @@ public class DownloadGUI extends JFrame
 
         } catch (IOException e) {
             e.printStackTrace();
+            logArea.append("Failure to save settings: " + e.toString() + "\n");
             popupMessage("Failed to save settings.");
         }
 
@@ -540,8 +542,9 @@ public class DownloadGUI extends JFrame
             constructCommand();
 
         } catch (IOException e) {
+            e.printStackTrace();
             System.out.println("No config file found, using defaults.");
-            popupMessage("No Config file found, using defaults");
+            logArea.append("No config file found, using defaults. \n");
             setSize(900,550);
 
             videoBtn.setSelected(true);
@@ -569,8 +572,9 @@ public class DownloadGUI extends JFrame
         if (locator.checkProcessSilently(path, versionFlag)) {
             return true;
         }
-        
-        popupMessage("Warning: Could not verify " + appName + ".\nIt may not be in your system PATH or application folder. If downloads fail, please ensure it is installed.");
+        String message = "Warning: Could not verify " + appName + ".\nIt may not be in your system PATH or application folder. If downloads fail, please ensure it is installed.\n";
+        popupMessage(message);
+        logArea.append(message);
         return false;
     }
 

@@ -88,7 +88,7 @@ public class DownloadManager
     {
         if (activeProcess != null && activeProcess.isAlive())
         {
-            activeProcess.destroy();
+            activeProcess.destroyForcibly();
         }
     }
 
