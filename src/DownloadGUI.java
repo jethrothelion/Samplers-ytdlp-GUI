@@ -52,404 +52,367 @@ public class DownloadGUI extends JFrame
     private Timer urlDebounceTimer; 
 
     public void initialization()
-    {
-        // Basic window setup
-        setTitle("Youtube Downloader");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        {
+            // Basic window setup
+            setTitle("Youtube Downloader");
+            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.fill = GridBagConstraints.BOTH;
+            setLayout(new GridBagLayout());
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.insets = new Insets(10, 10, 10, 10);
+            gbc.fill = GridBagConstraints.BOTH;
 
-        // --- TOP ROW: URL Input and Media Type ---
-        // URL TextField
-        urlField = new JTextField("Enter URL");
-        urlField.setBorder(new LineBorder(Color.BLACK, 2));
-        urlField.setForeground(Color.GRAY); 
-
-        
-        
-        // Setup debounce timer so it only fetches duration 1 second AFTER typing stops
-        urlDebounceTimer = new Timer(1000, e -> {
-            if (urlField.getText().contains("youtube.com"))
-            {
-                fetchVideoDuration(urlField.getText()); 
-            }
-        });
-        urlDebounceTimer.setRepeats(false);
-
-        // Listen for typing in the URL field to update the timeline selector's max range 
-        urlField.getDocument().addDocumentListener(new DocumentListener() {
-            public void changedUpdate(DocumentEvent e) { 
-                urlDebounceTimer.restart(); // Restarts the countdown instead of instantly spawning process
-            }
-            public void removeUpdate(DocumentEvent e) { 
-                urlDebounceTimer.restart();
-            }
-            public void insertUpdate(DocumentEvent e) { 
-                urlDebounceTimer.restart(); 
-            }
-        });
-
-        // Focus listener to handle placeholder text behavior
-        urlField.addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override
-            public void focusGained(java.awt.event.FocusEvent e) {
-                // If they click in and it says "Enter URL", clear it
-                if (urlField.getText().equals("Enter URL")) {
-                    urlField.setText("");
-                    urlField.setForeground(Color.BLACK); // Switch to normal typing color
-                }
-            }
-
-            @Override
-            public void focusLost(java.awt.event.FocusEvent e) {
-                // If they click away and left it blank, put the placeholder back
-                if (urlField.getText().isEmpty()) {
-                    urlField.setForeground(Color.GRAY); // Switch back to placeholder color
-                    urlField.setText("Enter URL");
-                }
-            }
-        });
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 4;  // was 2
-        gbc.weightx = 0.7;
-        gbc.ipady = 40; // Makes the text box taller
-        add(urlField, gbc);
-
-
-        // Video/Audio Radio Buttons
-        JPanel typePanel = new JPanel(new GridLayout(2, 1));
-        videoBtn = new JRadioButton("Video");
-        audioBtn = new JRadioButton("Audio");
-        ButtonGroup typeGroup = new ButtonGroup();
-        typeGroup.add(videoBtn);
-        typeGroup.add(audioBtn);
-        typePanel.add(videoBtn);
-        typePanel.add(audioBtn);
-        
-        gbc.gridx = 4;
-        gbc.gridwidth = 1;
-        gbc.weightx = 0;
-        gbc.ipady = 0; 
-        add(typePanel, gbc);
-
-        // New button
-        JButton savePrefBttn = new JButton();
-
-        Icon saveIcon = locator.getIcon("saveIcon.png");
-        savePrefBttn.setIcon(saveIcon);
-        savePrefBttn.setPreferredSize(new Dimension(20, 30));
-        JPanel newButtonPanel = new JPanel(new GridBagLayout());
-        newButtonPanel.add(savePrefBttn);
-        gbc.gridx = 5;
-        gbc.gridwidth = 1;
-        gbc.weightx = 0;
-        savePrefBttn.addActionListener(e -> {
-            saveConfig();
-
-        });
-
-        add(newButtonPanel, gbc);
-
-        // Empty gap
-        JPanel gapPanel = new JPanel();
-        gapPanel.setPreferredSize(new Dimension(80, 1));
-        gbc.gridx = 6;
-        gbc.gridwidth = 1;
-        gbc.weightx = 0;
-        add(gapPanel, gbc);
-
-        // Directory choosing button
-        JButton folderSelectButton = new JButton("Select Folder");
-        folderSelectButton.addActionListener(e -> {
+            // --- ROW 0: URL Input, Media Type, Folders & Download ---
             
-            // grabs and use OS file explorer instead of the java fx default. basically switches from java fx ui building to os, then run folder explorer ui update then switch back on close
-            try {
-                // 1. Save the current Java Look and Feel
-                LookAndFeel previousLF = UIManager.getLookAndFeel();
-                
-                // 2. Temporarily switch to the Native OS Look and Feel
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                
-                // 3. Create and show the JFileChooser
-                JFileChooser chooser = new JFileChooser();
-                chooser.setCurrentDirectory(new java.io.File(""));
-                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                
-                int result = chooser.showOpenDialog(folderSelectButton);
-                
-                // 4. Immediately switch back to the original Java Look and Feel
-                UIManager.setLookAndFeel(previousLF);
-                
-                // Process the result
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    selectedDirectory = chooser.getSelectedFile().getAbsolutePath();
-                    String message = "Selected folder: " + selectedDirectory;
-                    System.out.println(message);
-                    logArea.append(message);
-                } else {
-                    System.out.println("No folder selected");
+            // CREATION
+            urlField = new JTextField("Enter URL");
+            
+            JButton savePrefBttn = new JButton();
+            JPanel saveButtonPanel = new JPanel(new GridBagLayout());
+            
+            JPanel typePanel = new JPanel(new GridLayout(2, 1)); // Reverted back to GridLayout to stack vertically
+            videoBtn = new JRadioButton("Video");
+            audioBtn = new JRadioButton("Audio");
+            ButtonGroup typeGroup = new ButtonGroup();
+            
+            JPanel gapPanel = new JPanel();
+            JButton folderSelectButton = new JButton("Select Folder");
+            downloadBtn = new JButton("DOWNLOAD");
+
+            // POSISTIONING
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.gridwidth = 4;
+            gbc.weightx = 0.7;
+            gbc.ipady = 40; // Makes the text box taller
+            add(urlField, gbc);
+
+            gbc.gridx = 4;
+            gbc.gridwidth = 1;
+            gbc.weightx = 0;
+            gbc.ipady = 0; // Reset padding
+            add(typePanel, gbc);
+            
+            gbc.gridx = 5;
+            gbc.gridwidth = 1;
+            gbc.weightx = 0;
+            add(saveButtonPanel, gbc);
+
+            gbc.gridx = 6;
+            gbc.gridwidth = 1;
+            gbc.weightx = 0;
+            add(gapPanel, gbc);
+
+            gbc.gridx = 7;
+            gbc.gridwidth = 1;
+            gbc.weightx = 0;
+            gbc.weighty = 0;
+            add(folderSelectButton, gbc);
+
+            gbc.gridx = 8;
+            gbc.gridwidth = 1;
+            gbc.weightx = 0.2;
+            gbc.weighty = 0;    
+            add(downloadBtn, gbc);
+
+            // TOP ROW PROPERTIES
+            
+            // URL input box
+            urlField.setBorder(new LineBorder(Color.BLACK, 2));
+            urlField.setForeground(Color.GRAY);    
+            
+            urlDebounceTimer = new Timer(1000, e -> {
+                if (urlField.getText().contains("youtube.com"))
+                {
+                    fetchVideoDuration(urlField.getText()); 
                 }
-            } catch (Exception ex) {
-                System.err.println("Failed to swap Style, Look and Feel for file chooser.");
-                logArea.append("Failed to swap Style, Look and Feel for file chooser.");
-                ex.printStackTrace();
-            }
+            });
+            urlDebounceTimer.setRepeats(false);
+            
+            urlField.getDocument().addDocumentListener(new DocumentListener() {
+                public void changedUpdate(DocumentEvent e) { urlDebounceTimer.restart(); }
+                public void removeUpdate(DocumentEvent e) { urlDebounceTimer.restart(); }
+                public void insertUpdate(DocumentEvent e) { urlDebounceTimer.restart(); }
+            });
+            
+            urlField.addFocusListener(new java.awt.event.FocusAdapter() {
+                @Override
+                public void focusGained(java.awt.event.FocusEvent e) {
+                    if (urlField.getText().equals("Enter URL")) {
+                        urlField.setText("");
+                        urlField.setForeground(Color.BLACK);
+                    }
+                }
+                @Override
+                public void focusLost(java.awt.event.FocusEvent e) {
+                    if (urlField.getText().isEmpty()) {
+                        urlField.setForeground(Color.GRAY);
+                        urlField.setText("Enter URL");
+                    }
+                }
+            });
+            
+            // Type Panel
+            typeGroup.add(videoBtn);
+            typeGroup.add(audioBtn);
+            typePanel.add(videoBtn);
+            typePanel.add(audioBtn);
 
-            constructCommand();
-        });
+            // Save button
+            Icon saveIcon = locator.getIcon("saveIcon.png");
+            savePrefBttn.setIcon(saveIcon);
+            savePrefBttn.setPreferredSize(new Dimension(20, 30));
+            saveButtonPanel.add(savePrefBttn);
+            savePrefBttn.addActionListener(e -> saveConfig());
+            
+            // Gap Panel
+            gapPanel.setPreferredSize(new Dimension(80, 1));
 
-        Icon folderIcon = locator.getIcon("folderIcon.png");
-        
-        folderSelectButton.setIcon(folderIcon);
-        folderSelectButton.setBorder(new LineBorder(Color.BLACK, 2));
-        folderSelectButton.setFont(new Font("Arial", Font.PLAIN, 12));
-        folderSelectButton.setBackground(Color.WHITE);  
-        folderSelectButton.setForeground(Color.BLACK);
-        folderSelectButton.setPreferredSize(new Dimension(110, 50));
-        folderSelectButton.setMinimumSize(new Dimension(110, 50));
-        gbc.gridx = 7;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.weightx = 0;
-        gbc.weighty = 0;
-        add(folderSelectButton, gbc);
-
-    
-        // Command bar
-        commandBar = new JTextField();
-        commandBar.setBorder(new LineBorder(Color.BLUE, 2)); // Blue border to stand out
-        commandBar.setFont(new Font("Monospaced", Font.PLAIN, 14)); // Code font
-        
-        JScrollPane scrollPane = new JScrollPane(commandBar, 
-            JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setPreferredSize(new Dimension(400, 50));
-        scrollPane.setMinimumSize(new Dimension(100, 50));
-
-        // Wrapper panel to hold the command bar and the hyperlink without shifting the UI
-        JPanel commandWrapperPanel = new JPanel(new BorderLayout());
-        commandWrapperPanel.add(scrollPane, BorderLayout.CENTER);
-
-        // Small hyperlink label
-        JLabel hyperlinkLabel = new JLabel("<html><a href=''>More parameters</a></html>");
-        hyperlinkLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-        hyperlinkLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        // MouseListener to make the label act like a real link
-        hyperlinkLabel.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
+            // Folder Select Button
+            Icon folderIcon = locator.getIcon("folderIcon.png");
+            folderSelectButton.setIcon(folderIcon);
+            folderSelectButton.setBorder(new LineBorder(Color.BLACK, 2));
+            folderSelectButton.setFont(new Font("Arial", Font.PLAIN, 12));
+            folderSelectButton.setBackground(Color.WHITE);  
+            folderSelectButton.setForeground(Color.BLACK);
+            folderSelectButton.setPreferredSize(new Dimension(110, 50));
+            folderSelectButton.setMinimumSize(new Dimension(110, 50));
+            folderSelectButton.addActionListener(e -> {
                 try {
-                    Desktop.getDesktop().browse(new URI("https://github.com/yt-dlp/yt-dlp"));
+                    LookAndFeel previousLF = UIManager.getLookAndFeel();
+                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                    JFileChooser chooser = new JFileChooser();
+                    chooser.setCurrentDirectory(new java.io.File(""));
+                    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                    int result = chooser.showOpenDialog(folderSelectButton);
+                    UIManager.setLookAndFeel(previousLF);
+                    
+                    if (result == JFileChooser.APPROVE_OPTION) {
+                        selectedDirectory = chooser.getSelectedFile().getAbsolutePath();
+                        String message = "Selected folder: " + selectedDirectory;
+                        System.out.println(message);
+                        logArea.append(message);
+                    } else {
+                        System.out.println("No folder selected");
+                    }
                 } catch (Exception ex) {
+                    System.err.println("Failed to swap Style, Look and Feel for file chooser.");
+                    logArea.append("Failed to swap Style, Look and Feel for file chooser.");
                     ex.printStackTrace();
-                    logArea.append(ex.toString() +"\n");
-                    popupMessage("Could not open the link, sorry: " + ex); 
                 }
-            }
-        });
+                constructCommand();
+            });
 
-        // FlowLayout to align the link to the right side
-        JPanel linkPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        linkPanel.add(hyperlinkLabel);
-
-        // Add the link underneath the command bar inside the wrapper
-        commandWrapperPanel.add(linkPanel, BorderLayout.SOUTH);
-        gbc.gridx = 0;
-        gbc.gridy = 1; 
-        gbc.gridwidth = 9;
-        gbc.gridheight = 1;
-        gbc.weightx = 1.0;
-        gbc.ipady = 15;
-        
-        add(commandWrapperPanel, gbc);
+            // Download Button
+            downloadBtn.setForeground(new Color(0, 0, 0));
+            downloadBtn.setBorder(new LineBorder(new Color(0, 153, 51), 3));
+            downloadBtn.setFont(new Font("Arial", Font.BOLD, 16));
+            downloadBtn.setBackground(Color.GREEN);
+            downloadBtn.setPreferredSize(new Dimension(5, 30));
+            downloadBtn.addActionListener(e -> startDownload(commandBar.getText()));
 
 
-        // --- MIDDLE ROW: Timeline Range Selector ---
-        timelineSelector = new TimelineRangeSelector();
-
-        gbc.gridx = 4;
-        gbc.gridy = 2;
-        gbc.gridwidth = 5;
-        gbc.weightx = 0.6;
-        gbc.ipady = 0;
-        add(timelineSelector, gbc);
-        
-
-        // --- MIDDLE ROW: Quality and More Options ---
-        // Quality Panel
-        JPanel qualityPanel = new JPanel();
-        qualityPanel.setBorder(new LineBorder(Color.BLACK, 2));
-        qualityPanel.setLayout(new BoxLayout(qualityPanel, BoxLayout.Y_AXIS));
-        
-        highestButton = new JRadioButton("Highest quality");
-        highestButton.setActionCommand("3");
-        highestButton.setSelected(true); 
-
-        mediumButton = new JRadioButton("Medium quality");
-        mediumButton.setActionCommand("2");
-
-        lowestButton = new JRadioButton("Lowest quality");
-        lowestButton.setActionCommand("1");
-
-        //button group blocks mulitple selections at once
-        ButtonGroup qualityGroup = new ButtonGroup();
-        qualityGroup.add(lowestButton); qualityGroup.add(mediumButton); qualityGroup.add(highestButton);
-
-        qualityPanel.add(highestButton); qualityPanel.add(mediumButton); qualityPanel.add(lowestButton);
-         
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 4;
-        gbc.weightx = 0.4;
-        gbc.weighty = 0.3;
-        add(qualityPanel, gbc);
-
-
-        // --- BOTTOM ROW: Status and Progress ---
-        // Status Container
-        JPanel statusContainer = new JPanel(new BorderLayout(5, 5));
-        
-        // Status box (left)
-        JPanel statusBox = new JPanel(new BorderLayout());
-        JLabel statusLabel = new JLabel("download status", SwingConstants.LEFT);
-        downloadMessage = new JLabel("inactive", SwingConstants.CENTER);  
-        downloadMessage.setBorder(new LineBorder(Color.BLACK, 2));
-        downloadMessage.setPreferredSize(new Dimension(100, 50));
-        statusBox.add(statusLabel, BorderLayout.NORTH);
-        statusBox.add(downloadMessage, BorderLayout.CENTER);
-
-        // Progress bar box (right)
-        JPanel progressBox = new JPanel(new BorderLayout());
-        progressLabel = new JLabel("progress bar", SwingConstants.LEFT);
-        progressBar = new JProgressBar();
-        progressBar.setBorder(new LineBorder(Color.BLACK, 2));
-        progressBar.setPreferredSize(new Dimension(400, 30));
-        progressBox.add(progressLabel, BorderLayout.NORTH);
-        progressBox.add(progressBar, BorderLayout.CENTER);
-
-        statusContainer.add(statusBox, BorderLayout.WEST);
-        statusContainer.add(progressBox, BorderLayout.CENTER);
-
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 9;
-        gbc.weighty = 0.1;
-        add(statusContainer, gbc);
-
-
-        //Output area
-
-        JPanel logWrapperPanel = new JPanel(new BorderLayout());
-
-        logArea = new JTextArea();
-        logArea.setEditable(false);
-        logArea.setLineWrap(true);
-        logArea.setWrapStyleWord(true);
-        logArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        logArea.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        
-        // Put the text area in a scroll pane
-        logScrollPane = new JScrollPane(logArea);
-        logScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        logScrollPane.setPreferredSize(new Dimension(800, 100)); // Default size
-        
-        // The button panel (Top Left)
-        JPanel buttonWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        toggleLogBtn = new JButton("Hide Console");
-        toggleLogBtn.setFont(new Font("Arial", Font.PLAIN, 10));
-        toggleLogBtn.setFocusPainted(false);
-        toggleLogBtn.setMargin(new Insets(2, 5, 2, 5));
-        
-        // Action to show/hide the console text box
-        toggleLogBtn.addActionListener(e -> {
-            boolean isCurrentlyVisible = logScrollPane.isVisible();
-
-            GridBagLayout layout = (GridBagLayout) getContentPane().getLayout();
-            GridBagConstraints logGbc = layout.getConstraints(logWrapperPanel);
-
-            if (isCurrentlyVisible) {
-                // About to hide: Save its exact height, then subtract it from the window
-                savedLogHeight = logScrollPane.getHeight();
-                logScrollPane.setVisible(false);
-                toggleLogBtn.setText("Show Console");
-
-                // Remove weighty so the wrapper panel stops requesting leftover vertical space
-                logGbc.weighty = 0.0;
-                layout.setConstraints(logWrapperPanel, logGbc);
-                
-                // Subtract height, keep current width
-                setSize(getWidth(), getHeight() - savedLogHeight); 
-            } else {
-                // About to show: Add the saved height back to the window
-                logScrollPane.setVisible(true);
-                toggleLogBtn.setText("Hide Console");
-
-                // Restore the original weighty so the console can expand again
-                logGbc.weighty = 0.5;
-                layout.setConstraints(logWrapperPanel, logGbc);
-                
-                // Add height, keep current width
-                setSize(getWidth(), getHeight() + savedLogHeight);
-            }
+            // --- ROW 1: Command Bar Execution Display ---
             
-            // Force the layout to update inside the new window size
+            // CREATION
+            commandBar = new JTextField();
+            JScrollPane commandScrollPane = new JScrollPane(commandBar, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            JPanel commandWrapperPanel = new JPanel(new BorderLayout());
+            JLabel hyperlinkLabel = new JLabel("<html><a href=''>More parameters</a></html>");
+            JPanel linkPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
 
-            revalidate();
-            repaint();
-        });
+            // POSISTIONING
+            gbc.gridx = 0;
+            gbc.gridy = 1; 
+            gbc.gridwidth = 9;
+            gbc.gridheight = 1;
+            gbc.weightx = 1.0; // Overrides the 0.2 carried over from the new downloadBtn position
+            gbc.weighty = 0.0; // Reset just in case
+            gbc.ipady = 15;
+            add(commandWrapperPanel, gbc);
+
+            // PROPERTIES
+            commandBar.setBorder(new LineBorder(Color.BLUE, 2));
+            commandBar.setFont(new Font("Monospaced", Font.PLAIN, 14));
+            
+            commandScrollPane.setPreferredSize(new Dimension(400, 50));
+            commandScrollPane.setMinimumSize(new Dimension(100, 50));
+            
+            hyperlinkLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+            hyperlinkLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            hyperlinkLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseClicked(java.awt.event.MouseEvent e) {
+                    try {
+                        Desktop.getDesktop().browse(new URI("https://github.com/yt-dlp/yt-dlp"));
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        logArea.append(ex.toString() +"\n");
+                        popupMessage("Could not open the link, sorry: " + ex); 
+                    }
+                }
+            });
+
+            linkPanel.add(hyperlinkLabel);
+            commandWrapperPanel.add(commandScrollPane, BorderLayout.CENTER);
+            commandWrapperPanel.add(linkPanel, BorderLayout.SOUTH);
+
+
+            // --- ROW 2: Quality Panel & Timeline Range Selector ---
+
+            // CREATION
+            JPanel qualityPanel = new JPanel();
+            highestButton = new JRadioButton("Highest quality");
+            mediumButton = new JRadioButton("Medium quality");
+            lowestButton = new JRadioButton("Lowest quality");
+            ButtonGroup qualityGroup = new ButtonGroup();
+            
+            timelineSelector = new TimelineRangeSelector();
+
+            // POSISTIONING
+            gbc.gridx = 0;
+            gbc.gridy = 2;
+            gbc.gridwidth = 4;
+            gbc.weightx = 0.4;
+            gbc.weighty = 0.3;
+            gbc.ipady = 0; // Ensure reset
+            add(qualityPanel, gbc);
+
+            gbc.gridx = 4;
+            gbc.gridy = 2;
+            gbc.gridwidth = 5;
+            gbc.weightx = 0.6;
+            // Removed explicit weighty here; it inherently carries over 0.3 from qualityPanel like the old code.
+            add(timelineSelector, gbc);
+
+            // PROPERTIES
+            qualityPanel.setBorder(new LineBorder(Color.BLACK, 2));
+            qualityPanel.setLayout(new BoxLayout(qualityPanel, BoxLayout.Y_AXIS));
+            
+            highestButton.setActionCommand("3");
+            highestButton.setSelected(true); 
+            mediumButton.setActionCommand("2");
+            lowestButton.setActionCommand("1");
+
+            qualityGroup.add(lowestButton); 
+            qualityGroup.add(mediumButton); 
+            qualityGroup.add(highestButton);
+
+            qualityPanel.add(highestButton); 
+            qualityPanel.add(mediumButton); 
+            qualityPanel.add(lowestButton);
+
+
+            // --- ROW 3: Status and Progress Bar ---
+
+            // CREATION
+            JPanel statusContainer = new JPanel(new BorderLayout(5, 5));
+            JPanel statusBox = new JPanel(new BorderLayout());
+            JLabel statusLabel = new JLabel("download status", SwingConstants.LEFT);
+            downloadMessage = new JLabel("inactive", SwingConstants.CENTER);  
+            
+            JPanel progressBox = new JPanel(new BorderLayout());
+            progressLabel = new JLabel("progress bar", SwingConstants.LEFT);
+            progressBar = new JProgressBar();
+
+            // POSISTIONING
+            gbc.gridx = 0;
+            gbc.gridy = 3;
+            gbc.gridwidth = 9;
+            gbc.weightx = 0.4; // Explicitly set to 0.4 to perfectly mimic the carry-over from qualityPanel in your original code
+            gbc.weighty = 0.1;
+            add(statusContainer, gbc);
+
+            // PROPERTIES
+            downloadMessage.setBorder(new LineBorder(Color.BLACK, 2));
+            downloadMessage.setPreferredSize(new Dimension(100, 50));
+            statusBox.add(statusLabel, BorderLayout.NORTH);
+            statusBox.add(downloadMessage, BorderLayout.CENTER);
+
+            progressBar.setBorder(new LineBorder(Color.BLACK, 2));
+            progressBar.setPreferredSize(new Dimension(400, 30));
+            progressBox.add(progressLabel, BorderLayout.NORTH);
+            progressBox.add(progressBar, BorderLayout.CENTER);
+
+            statusContainer.add(statusBox, BorderLayout.WEST);
+            statusContainer.add(progressBox, BorderLayout.CENTER);
+
+
+            // --- ROW 4: Output / Log Console Area ---
+
+            // CREATION
+            JPanel logWrapperPanel = new JPanel(new BorderLayout());
+            logArea = new JTextArea();
+            logScrollPane = new JScrollPane(logArea);
+            
+            JPanel buttonWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            toggleLogBtn = new JButton("Hide Console");
+
+            // POSISTIONING
+            gbc.gridx = 0;
+            gbc.gridy = 4;
+            gbc.gridwidth = 9;
+            // weightx naturally carries over as 0.4 from Row 3, matching old behavior
+            gbc.weighty = 0.5; // Allows console expansion
+            add(logWrapperPanel, gbc);
+
+            // PROPERTIES
+            logArea.setEditable(false);
+            logArea.setLineWrap(true);
+            logArea.setWrapStyleWord(true);
+            logArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+            logArea.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+            
+            logScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+            logScrollPane.setPreferredSize(new Dimension(800, 100));
+            
+            toggleLogBtn.setFont(new Font("Arial", Font.PLAIN, 10));
+            toggleLogBtn.setFocusPainted(false);
+            toggleLogBtn.setMargin(new Insets(2, 5, 2, 5));
+            
+            toggleLogBtn.addActionListener(e -> {
+                boolean isCurrentlyVisible = logScrollPane.isVisible();
+                GridBagLayout layout = (GridBagLayout) getContentPane().getLayout();
+                GridBagConstraints logGbc = layout.getConstraints(logWrapperPanel);
+
+                if (isCurrentlyVisible) {
+                    savedLogHeight = logScrollPane.getHeight();
+                    logScrollPane.setVisible(false);
+                    toggleLogBtn.setText("Show Console");
+                    logGbc.weighty = 0.0;
+                    layout.setConstraints(logWrapperPanel, logGbc);
+                    setSize(getWidth(), getHeight() - savedLogHeight); 
+                } else {
+                    logScrollPane.setVisible(true);
+                    toggleLogBtn.setText("Hide Console");
+                    logGbc.weighty = 0.5;
+                    layout.setConstraints(logWrapperPanel, logGbc);
+                    setSize(getWidth(), getHeight() + savedLogHeight);
+                }
+                revalidate();
+                repaint();
+            });
+            
+            buttonWrapper.add(toggleLogBtn);
+            logWrapperPanel.add(buttonWrapper, BorderLayout.NORTH);
+            logWrapperPanel.add(logScrollPane, BorderLayout.CENTER);
+
+
+            // --- FINAL SETTING RUNNERS & INITIALIZATION ---
+            
+            constructCommand();
+            setupCommandBarListeners();
+            readConfig();
+
+            // Run verification
+            runStartupChecks();
+            
+            setLocationRelativeTo(null);
+            setVisible(true);
+        }
+    
         
-        buttonWrapper.add(toggleLogBtn);
-        
-        // Build the wrapper
-        logWrapperPanel.add(buttonWrapper, BorderLayout.NORTH);
-        logWrapperPanel.add(logScrollPane, BorderLayout.CENTER);
-        
-        // Add to the main GridBagLayout
-        gbc.gridx = 0;
-        gbc.gridy = 4; // Puts it below the status bar
-        gbc.gridwidth = 9;
-        gbc.weighty = 0.5; // Allows the console to expand and take up extra vertical space
-        add(logWrapperPanel, gbc);
-
-
-        // Download Button
-        downloadBtn = new JButton("DOWNLOAD");
-        downloadBtn.setForeground(new Color(0, 0, 0));
-        downloadBtn.setBorder(new LineBorder(new Color(0, 153, 51), 3));
-        downloadBtn.setFont(new Font("Arial", Font.BOLD, 16));
-        downloadBtn.setBackground(Color.GREEN);
-        downloadBtn.setPreferredSize(new Dimension(5, 30));
-        downloadBtn.addActionListener(e -> {
-            startDownload(commandBar.getText());
-        });
-        gbc.gridx = 8;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.weighty = 0;    
-        gbc.weightx = 0.2;
-        add(downloadBtn, gbc);
-
-
-        constructCommand();
-        setupCommandBarListeners();
-
-        readConfig();
-
-        // Run verification (Guaranteed to only run once)
-        runStartupChecks();
-        
-        setLocationRelativeTo(null);
-        setVisible(true);
-        
-    }
-
     String configPath = System.getProperty("user.home") + File.separator + "YoutubeDownloaderConfig.properties";
-
     public void saveConfig()
     {
         Properties prop = new Properties();
