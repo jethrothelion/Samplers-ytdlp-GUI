@@ -46,6 +46,9 @@ public class DownloadGUI extends JFrame
     // prevent spamming yt-dlp processes
     private Timer urlDebounceTimer; 
 
+    // settings variables
+    boolean autoStart = false;
+
     public void initialization()
         {
             // Basic window setup
@@ -67,7 +70,7 @@ public class DownloadGUI extends JFrame
 
             urlField = new JTextField("Enter URL");
             
-            JPanel typePanel = new JPanel(new GridLayout(2, 1)); // Reverted back to GridLayout to stack vertically
+            JPanel typePanel = new JPanel(new GridLayout(2, 1)); 
             videoBtn = new JRadioButton("Video");
             audioBtn = new JRadioButton("Audio");
             ButtonGroup typeGroup = new ButtonGroup();
@@ -151,7 +154,8 @@ public class DownloadGUI extends JFrame
             urlField.getDocument().addDocumentListener(new DocumentListener() {
                 public void changedUpdate(DocumentEvent e) { urlDebounceTimer.restart(); }
                 public void removeUpdate(DocumentEvent e) { urlDebounceTimer.restart(); }
-                public void insertUpdate(DocumentEvent e) { urlDebounceTimer.restart(); }
+                //AUTO start setting starts download on inputed url
+                public void insertUpdate(DocumentEvent e) { urlDebounceTimer.restart(); if(autoStart) startDownload(commandBar.getText());}
             });
             
             urlField.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -513,12 +517,12 @@ public class DownloadGUI extends JFrame
         }
         
 
-        String autoStart = config.getProperty("autoStart", "false");
-        if(autoStart != null) 
-        {
-            
+        String originalAutoStart = config.getProperty("autoStart", "false");
+        if(originalAutoStart != null) 
+        {   
+            autoStart = Boolean.parseBoolean(originalAutoStart);
         }
-        else System.out.println("Cannot grab");
+
 
         constructCommand();
     }
