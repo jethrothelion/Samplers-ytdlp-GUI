@@ -65,10 +65,12 @@ public class DownloadGUI extends JFrame
             // --- ROW 0: URL Input, Media Type, Folders & Download ---
             
             // CREATION
-            urlField = new JTextField("Enter URL");
-            
+            JButton settingsBttn = new JButton();
             JButton savePrefBttn = new JButton();
-            JPanel saveButtonPanel = new JPanel(new GridBagLayout());
+
+            JPanel settingsButtonPanel = new JPanel(new GridLayout(2, 1));
+
+            urlField = new JTextField("Enter URL");
             
             JPanel typePanel = new JPanel(new GridLayout(2, 1)); // Reverted back to GridLayout to stack vertically
             videoBtn = new JRadioButton("Video");
@@ -76,28 +78,31 @@ public class DownloadGUI extends JFrame
             ButtonGroup typeGroup = new ButtonGroup();
             
             JPanel gapPanel = new JPanel();
+
             JButton folderSelectButton = new JButton("Select Folder");
+            
             downloadBtn = new JButton("DOWNLOAD");
 
             // POSISTIONING
             gbc.gridx = 0;
             gbc.gridy = 0;
+            gbc.gridwidth = 1;
+            gbc.weightx = 0;
+            gbc.ipady = 0; 
+            add(settingsButtonPanel, gbc);
+
+            gbc.gridx = 1;
             gbc.gridwidth = 4;
-            gbc.weightx = 0.7;
+            gbc.weightx = 0.1; 
             gbc.ipady = 40; // Makes the text box taller
             add(urlField, gbc);
 
-            gbc.gridx = 4;
+            gbc.gridx = 5;
             gbc.gridwidth = 1;
             gbc.weightx = 0;
             gbc.ipady = 0; // Reset padding
             add(typePanel, gbc);
             
-            gbc.gridx = 5;
-            gbc.gridwidth = 1;
-            gbc.weightx = 0;
-            add(saveButtonPanel, gbc);
-
             gbc.gridx = 6;
             gbc.gridwidth = 1;
             gbc.weightx = 0;
@@ -105,7 +110,7 @@ public class DownloadGUI extends JFrame
 
             gbc.gridx = 7;
             gbc.gridwidth = 1;
-            gbc.weightx = 0;
+            gbc.weightx = 0; 
             gbc.weighty = 0;
             add(folderSelectButton, gbc);
 
@@ -116,7 +121,22 @@ public class DownloadGUI extends JFrame
             add(downloadBtn, gbc);
 
             // TOP ROW PROPERTIES
-            
+
+            // Settings button
+            ImageIcon originalSettingsIcon = (ImageIcon) locator.getIcon("settingsIcon.png");
+            Image scaledSettingsImg = originalSettingsIcon.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
+            Icon settingsIcon = new ImageIcon(scaledSettingsImg);
+            settingsBttn.setIcon(settingsIcon);
+            settingsButtonPanel.add(settingsBttn);
+            settingsBttn.addActionListener(e -> openSettings());
+
+            // Save button
+            Icon saveIcon = locator.getIcon("saveIcon.png");
+            savePrefBttn.setIcon(saveIcon);
+            savePrefBttn.setPreferredSize(new Dimension(20, 30));
+            settingsButtonPanel.add(savePrefBttn);
+            savePrefBttn.addActionListener(e -> saveConfig());
+
             // URL input box
             urlField.setBorder(new LineBorder(Color.BLACK, 2));
             urlField.setForeground(Color.GRAY);    
@@ -158,12 +178,7 @@ public class DownloadGUI extends JFrame
             typePanel.add(videoBtn);
             typePanel.add(audioBtn);
 
-            // Save button
-            Icon saveIcon = locator.getIcon("saveIcon.png");
-            savePrefBttn.setIcon(saveIcon);
-            savePrefBttn.setPreferredSize(new Dimension(20, 30));
-            saveButtonPanel.add(savePrefBttn);
-            savePrefBttn.addActionListener(e -> saveConfig());
+
             
             // Gap Panel
             gapPanel.setPreferredSize(new Dimension(80, 1));
@@ -411,111 +426,74 @@ public class DownloadGUI extends JFrame
             setVisible(true);
         }
     
+    public void openSettings()
+    {
+    SwingUtilities.invokeLater(() -> {
+        SettingsWindow settings = new SettingsWindow();
+        settings.initialization();
+    });
+    }
         
-    String configPath = System.getProperty("user.home") + File.separator + "YoutubeDownloaderConfig.properties";
     public void saveConfig()
     {
-        Properties prop = new Properties();
+        ConfigManager config = ConfigManager.getInstance();
 
-        
-        try (FileOutputStream out = new FileOutputStream(configPath)) 
-        {
-            // Get the propertys from the radio buttons
+        // Quality
+        String quality = "3"; 
+        if (mediumButton.isSelected()) quality = "2";
+        if (lowestButton.isSelected()) quality = "1";
+        config.setProperty("quality", quality);
 
-            //quality
-            String quality = "3"; // Defaults to highest
-            if (mediumButton.isSelected()) quality = "2";
-            if (lowestButton.isSelected()) quality = "1";
-
-            //video or audio
-            String type = "audio"; // Defaults to audio
-            if (videoBtn.isSelected()) type = "video";
-            if (audioBtn.isSelected()) type = "audio";
-
-
-
-            //  Add properties to the object
-            prop.setProperty("quality", quality);
-
-            if (selectedDirectory != null) 
-            {
-                prop.setProperty("directory", selectedDirectory);
-            }
-
-            prop.setProperty("type", type);
-
-            prop.setProperty("windowWidth", String.valueOf(getWidth()));
-            prop.setProperty("windowHeight", String.valueOf(getHeight()));
-
-            // Save the file to disk
-            prop.store(out, "User Preferences");
-            System.out.println("Settings saved to config.properties");
-            logArea.append("Settings saved to config.properties");
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            logArea.append("Failure to save settings: " + e.toString() + "\n");
-            popupMessage("Failed to save settings.");
+        // Directory
+        if (selectedDirectory != null) {
+            config.setProperty("directory", selectedDirectory);
         }
 
-        
+        // Type
+        String type = "audio"; 
+        if (videoBtn.isSelected()) type = "video";
+        config.setProperty("type", type);
+
+        // Window Size
+        config.setProperty("windowWidth", String.valueOf(getWidth()));
+        config.setProperty("windowHeight", String.valueOf(getHeight()));
+
+        config.save();
+        logArea.append("Settings saved to config.properties\n");
     }
+
     public void readConfig()
     {
+        ConfigManager config = ConfigManager.getInstance();
 
-        Properties prop = new Properties();
-        // Load the file
-        try (FileInputStream in = new FileInputStream(configPath)) {
-            prop.load(in);
+        // Quality
+        String quality = config.getProperty("quality", "3"); 
+        if (quality.equals("1")) lowestButton.setSelected(true);
+        else if (quality.equals("2")) mediumButton.setSelected(true);
+        else highestButton.setSelected(true);
 
-            //quality
-            String quality = prop.getProperty("quality", "3"); // "3" is the default if key isn't found
-            if (quality.equals("1")) {
-                lowestButton.setSelected(true);
-            } else if (quality.equals("2")) {
-                mediumButton.setSelected(true);
-            } else {
-                highestButton.setSelected(true);
-            }
-
-            //directory
-            File savedDir = new File(prop.getProperty("directory", ""));
-            if(savedDir.exists() && savedDir.isDirectory())
-            {   
-                
-                selectedDirectory = prop.getProperty("directory");
-            }
-
-            //type
-            String type = prop.getProperty("type", "audio");
-            if (type.equals("audio")) audioBtn.setSelected(true);
-            if (type.equals("video")) videoBtn.setSelected(true);
-
-                        
-            // Load window dimensions, with a safety fallback to 900x550
-            try {
-                int width = Integer.parseInt(prop.getProperty("windowWidth", "900"));
-                int height = Integer.parseInt(prop.getProperty("windowHeight", "550"));
-                setSize(width, height);
-            } catch (NumberFormatException ex) {
-                setSize(900, 550);
-            }
-
-            // Refresh the command bar to reflect loaded settings
-            constructCommand();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("No config file found, using defaults.");
-            logArea.append("No config file found, using defaults. \n");
-            setSize(900,550);
-
-            videoBtn.setSelected(true);
+        // Directory
+        File savedDir = new File(config.getProperty("directory", ""));
+        if(savedDir.exists() && savedDir.isDirectory()) {   
+            selectedDirectory = config.getProperty("directory", "");
         }
 
+        // Type
+        String type = config.getProperty("type", "audio");
+        if (type.equals("audio")) audioBtn.setSelected(true);
+        if (type.equals("video")) videoBtn.setSelected(true);
 
+        // Load window dimensions
+        try {
+            int width = Integer.parseInt(config.getProperty("windowWidth", "900"));
+            int height = Integer.parseInt(config.getProperty("windowHeight", "550"));
+            setSize(width, height);
+        } catch (NumberFormatException ex) {
+            setSize(900, 550);
+        }
+
+        constructCommand();
     }
-    
     // Dedicated method to ensure checks only run once
     private void runStartupChecks() {
         if (hasVerifiedExecutables) {
