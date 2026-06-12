@@ -8,46 +8,35 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
-public class SettingsWindow extends JFrame
+public class SettingsWindow extends JDialog
 {
-    // --- Card Layout Components ---
     private CardLayout cardLayout;
     private JPanel cardPanel;
 
-    // --- Paths Input Variables ---
     private JTextField defaultDirField;
     private JTextField ytdlpPathField;
     private JTextField ffmpegPathField;
     private JButton browseDirBtn;
 
-    // --- Appearance Input Variables ---
     private JComboBox<String> themeDropdown;
 
-    // --- Behavior Input Variables ---
     private JCheckBox autoStartCheckbox;
 
-    // --- Action Variables ---
     private JButton saveBtn;
     private JButton closeBtn;
 
     String configPath = System.getProperty("user.home") + File.separator + "YoutubeDownloaderConfig.properties";
 
-    public static void main(String[] args)
-    {
-        SwingUtilities.invokeLater(() -> {
-            SettingsWindow window = new SettingsWindow();
-            window.initialization();
-        });
-    }
 
     public void initialization()
     {
         setTitle("Settings");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); 
+        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE); 
+        setModal(true);
 
         setLayout(new BorderLayout());
 
-        // --- 1. CREATION: Category Sidebar (Left) ---
+        // --- CREATION: Category Sidebar (Left) ---
         JPanel sidebarPanel = new JPanel();
         sidebarPanel.setLayout(new BoxLayout(sidebarPanel, BoxLayout.Y_AXIS));
         sidebarPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -63,7 +52,7 @@ public class SettingsWindow extends JFrame
         sidebarPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         sidebarPanel.add(behaviorBtn);
 
-        // --- 2. CREATION: Card Panel (Right) ---
+        // --- CREATION: Card Panel (Right) ---
         cardLayout = new CardLayout();
         cardPanel = new JPanel(cardLayout);
         cardPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -78,7 +67,7 @@ public class SettingsWindow extends JFrame
         appearanceBtn.addActionListener(e -> cardLayout.show(cardPanel, "Appearance"));
         behaviorBtn.addActionListener(e -> cardLayout.show(cardPanel, "Behavior"));
 
-        // --- 3. CREATION: Bottom Action Buttons ---
+        // --- CREATION: Bottom Action Buttons ---
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         saveBtn = new JButton("SAVE");
         closeBtn = new JButton("CLOSE");
@@ -95,7 +84,7 @@ public class SettingsWindow extends JFrame
         buttonPanel.add(saveBtn);
         buttonPanel.add(closeBtn);
 
-        // --- 4. POSITIONING: Assembly ---
+        // --- POSITIONING: Assembly ---
         add(sidebarPanel, BorderLayout.WEST);
         add(cardPanel, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);

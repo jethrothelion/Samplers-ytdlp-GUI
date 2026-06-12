@@ -428,10 +428,11 @@ public class DownloadGUI extends JFrame
     
     public void openSettings()
     {
-    SwingUtilities.invokeLater(() -> {
-        SettingsWindow settings = new SettingsWindow();
-        settings.initialization();
-    });
+
+    SettingsWindow settings = new SettingsWindow();
+    settings.initialization();
+
+    readConfig();
     }
         
     public void saveConfig()
