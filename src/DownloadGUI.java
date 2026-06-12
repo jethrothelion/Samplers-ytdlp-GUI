@@ -124,16 +124,20 @@ public class DownloadGUI extends JFrame
 
             // Settings button
             ImageIcon originalSettingsIcon = (ImageIcon) locator.getIcon("settingsIcon.png");
-            Image scaledSettingsImg = originalSettingsIcon.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
+            Image scaledSettingsImg = originalSettingsIcon.getImage().getScaledInstance(30, 25, Image.SCALE_SMOOTH);
             Icon settingsIcon = new ImageIcon(scaledSettingsImg);
             settingsBttn.setIcon(settingsIcon);
+            settingsBttn.setMargin(new Insets(0, 0, 0, 0));
             settingsButtonPanel.add(settingsBttn);
             settingsBttn.addActionListener(e -> openSettings());
 
             // Save button
-            Icon saveIcon = locator.getIcon("saveIcon.png");
+            ImageIcon originalSaveIcon = (ImageIcon) locator.getIcon("saveIcon.png");
+            Image scaledSaveImg = originalSaveIcon.getImage().getScaledInstance(30, 25, Image.SCALE_SMOOTH);
+            Icon saveIcon = new ImageIcon(scaledSaveImg);
             savePrefBttn.setIcon(saveIcon);
-            savePrefBttn.setPreferredSize(new Dimension(20, 30));
+            savePrefBttn.setMargin(new Insets(0, 0, 0, 0)); // CHANGED: Removes default inner button padding to shrink width/height
+            savePrefBttn.setPreferredSize(new Dimension(30, 25));
             settingsButtonPanel.add(savePrefBttn);
             savePrefBttn.addActionListener(e -> saveConfig());
 
@@ -428,9 +432,26 @@ public class DownloadGUI extends JFrame
     
     public void openSettings()
     {
-
+    // Dimming layer
+    JPanel dimmingPanel = new JPanel() 
+    {
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            
+            g.setColor(new Color(0, 0, 0, 200)); 
+            g.fillRect(0, 0, getWidth(), getHeight());
+        }
+    };
+    dimmingPanel.setOpaque(false);
+    setGlassPane(dimmingPanel);
+    dimmingPanel.setVisible(true);
+    
     SettingsWindow settings = new SettingsWindow();
     settings.initialization();
+
+    // Clear Dimming layer
+    dimmingPanel.setVisible(false);
 
     readConfig();
     }
