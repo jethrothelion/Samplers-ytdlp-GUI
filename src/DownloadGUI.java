@@ -1,14 +1,9 @@
 import java.awt.*;
 import java.io.BufferedReader;
-import java.io.EOFException;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -31,15 +26,15 @@ public class DownloadGUI extends JFrame
     private JRadioButton highestButton;
     private JRadioButton mediumButton;
     private JRadioButton lowestButton;
-    private double distanceFromLeft;
-    private double distanceFromRight;
     private JLabel progressLabel;
     private JButton downloadBtn;
     TimelineRangeSelector timelineSelector;
 
     private JTextArea logArea;
     private JScrollPane logScrollPane;
+    private JPanel logWrapperPanel;
     private JButton toggleLogBtn;
+    boolean logCurrentlyVisible = true;
     private int savedLogHeight = 100;
 
     private int videoDuration = -1; // Duration in seconds, -1 means unknown
@@ -245,8 +240,8 @@ public class DownloadGUI extends JFrame
             gbc.gridy = 1; 
             gbc.gridwidth = 9;
             gbc.gridheight = 1;
-            gbc.weightx = 1.0; // Overrides the 0.2 carried over from the new downloadBtn position
-            gbc.weighty = 0.0; // Reset just in case
+            gbc.weightx = 1.0; 
+            gbc.weighty = 0.0; 
             gbc.ipady = 15;
             add(commandWrapperPanel, gbc);
 
@@ -360,7 +355,7 @@ public class DownloadGUI extends JFrame
             // --- ROW 4: Output / Log Console Area ---
 
             // CREATION
-            JPanel logWrapperPanel = new JPanel(new BorderLayout());
+            logWrapperPanel = new JPanel(new BorderLayout());
             logArea = new JTextArea();
             logScrollPane = new JScrollPane(logArea);
             
@@ -390,26 +385,7 @@ public class DownloadGUI extends JFrame
             toggleLogBtn.setMargin(new Insets(2, 5, 2, 5));
             
             toggleLogBtn.addActionListener(e -> {
-                boolean isCurrentlyVisible = logScrollPane.isVisible();
-                GridBagLayout layout = (GridBagLayout) getContentPane().getLayout();
-                GridBagConstraints logGbc = layout.getConstraints(logWrapperPanel);
-
-                if (isCurrentlyVisible) {
-                    savedLogHeight = logScrollPane.getHeight();
-                    logScrollPane.setVisible(false);
-                    toggleLogBtn.setText("Show Console");
-                    logGbc.weighty = 0.0;
-                    layout.setConstraints(logWrapperPanel, logGbc);
-                    setSize(getWidth(), getHeight() - savedLogHeight); 
-                } else {
-                    logScrollPane.setVisible(true);
-                    toggleLogBtn.setText("Hide Console");
-                    logGbc.weighty = 0.5;
-                    layout.setConstraints(logWrapperPanel, logGbc);
-                    setSize(getWidth(), getHeight() + savedLogHeight);
-                }
-                revalidate();
-                repaint();
+                setLogVisibility(!logCurrentlyVisible);
             });
             
             buttonWrapper.add(toggleLogBtn);
@@ -423,7 +399,6 @@ public class DownloadGUI extends JFrame
             setupCommandBarListeners();
             readConfig();
 
-            // Run verification
             runStartupChecks();
             
             setLocationRelativeTo(null);
@@ -445,8 +420,17 @@ public class DownloadGUI extends JFrame
     };
     dimmingPanel.setOpaque(false);
     setGlassPane(dimmingPanel);
+    dimmingPanel.setLayout(new java.awt.GridBagLayout());
     dimmingPanel.setVisible(true);
     
+    // Notify in settings text
+    JLabel youInSettings = new JLabel("You are in the settings btw");
+    youInSettings.setSize(300, 200);
+    youInSettings.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 16));
+    youInSettings.setForeground(Color.PINK);
+    dimmingPanel.add(youInSettings);
+    
+   // run settings window
     SettingsWindow settings = new SettingsWindow();
     settings.initialization();
 
@@ -454,6 +438,7 @@ public class DownloadGUI extends JFrame
     dimmingPanel.setVisible(false);
 
     readConfig();
+    constructCommand();
     }
         
     public void saveConfig()
@@ -480,6 +465,9 @@ public class DownloadGUI extends JFrame
         config.setProperty("windowWidth", String.valueOf(getWidth()));
         config.setProperty("windowHeight", String.valueOf(getHeight()));
 
+        if(logCurrentlyVisible) config.setProperty("logVisibility", "true");
+        if(!logCurrentlyVisible) config.setProperty("logVisibility", "false");
+
         config.save();
         logArea.append("Settings saved to config.properties\n");
     }
@@ -496,7 +484,7 @@ public class DownloadGUI extends JFrame
 
         // Directory
         File savedDir = new File(config.getProperty("directory", ""));
-        if(savedDir.exists() && savedDir.isDirectory()) {   
+        if(savedDir.exists() && savedDir.isDirectory() && savedDir != null) {   
             selectedDirectory = config.getProperty("directory", "");
         }
 
@@ -510,12 +498,72 @@ public class DownloadGUI extends JFrame
             int width = Integer.parseInt(config.getProperty("windowWidth", "900"));
             int height = Integer.parseInt(config.getProperty("windowHeight", "550"));
             setSize(width, height);
-        } catch (NumberFormatException ex) {
+        } catch (NumberFormatException ex) 
+        {
             setSize(900, 550);
         }
 
+        // Log area visibility
+        String logVisibilityCheck = config.getProperty("logVisibility", "True");
+        if(logVisibilityCheck != null)
+        {
+                if(logVisibilityCheck.equals("true")) logCurrentlyVisible = true;
+                if(logVisibilityCheck.equals("false")) logCurrentlyVisible = false;
+                setLogVisibility(logCurrentlyVisible);              
+        }
+        
+
+        String autoStart = config.getProperty("autoStart", "false");
+        if(autoStart != null) 
+        {
+            
+        }
+        else System.out.println("Cannot grab");
+
         constructCommand();
     }
+
+    private void setLogVisibility(boolean makeVisible) {
+        GridBagLayout layout = (GridBagLayout) getContentPane().getLayout();
+        GridBagConstraints logGbc = layout.getConstraints(logWrapperPanel);
+
+
+        if (makeVisible) 
+        {
+            logScrollPane.setVisible(true);
+            logArea.setVisible(true); 
+            toggleLogBtn.setText("Hide Console");
+            logGbc.weighty = 0.5;
+            
+            // Only adjust window size if the window is currently being displayed on the screen
+            if (isVisible()) {
+                setSize(getWidth(), getHeight() + savedLogHeight);
+            }
+            logCurrentlyVisible = true;
+        }
+        if (!makeVisible)
+        {
+            // Only save height if it actually exists to prevent the squish 
+            if (logScrollPane.getHeight() > 0) {
+                savedLogHeight = logScrollPane.getHeight(); 
+            }
+            logScrollPane.setVisible(false);
+            logArea.setVisible(false);
+            toggleLogBtn.setText("Show Console");
+            logGbc.weighty = 0.0;
+            
+            // Only adjust window size if the window is currently being displayed on the screen
+            if (isVisible()) {
+                setSize(getWidth(), getHeight() - savedLogHeight); 
+            }
+            logCurrentlyVisible = false;
+        }
+        
+        layout.setConstraints(logWrapperPanel, logGbc);
+        revalidate();
+        repaint();
+    }
+
     // Dedicated method to ensure checks only run once
     private void runStartupChecks() {
         if (hasVerifiedExecutables) {
