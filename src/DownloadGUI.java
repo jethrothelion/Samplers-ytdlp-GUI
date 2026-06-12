@@ -51,6 +51,7 @@ public class DownloadGUI extends JFrame
 
     public void initialization()
         {
+            
             // Basic window setup
             setTitle("Youtube Downloader");
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -59,6 +60,16 @@ public class DownloadGUI extends JFrame
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.insets = new Insets(10, 10, 10, 10);
             gbc.fill = GridBagConstraints.BOTH;
+            // window sizing load
+            try 
+            {
+                int width = Integer.parseInt(ConfigManager.getInstance().getProperty("windowWidth", "900"));
+                int height = Integer.parseInt(ConfigManager.getInstance().getProperty("windowHeight", "550"));
+             setSize(width, height);
+            } catch (NumberFormatException ex) {
+                setSize(900, 550);
+            }
+
 
             // --- ROW 0: URL Input, Media Type, Folders & Download ---
             
@@ -497,24 +508,11 @@ public class DownloadGUI extends JFrame
         if (type.equals("audio")) audioBtn.setSelected(true);
         if (type.equals("video")) videoBtn.setSelected(true);
 
-        // Load window dimensions
-        try {
-            int width = Integer.parseInt(config.getProperty("windowWidth", "900"));
-            int height = Integer.parseInt(config.getProperty("windowHeight", "550"));
-            setSize(width, height);
-        } catch (NumberFormatException ex) 
-        {
-            setSize(900, 550);
-        }
 
         // Log area visibility
         String logVisibilityCheck = config.getProperty("logVisibility", "True");
-        if(logVisibilityCheck != null)
-        {
-                if(logVisibilityCheck.equals("true")) logCurrentlyVisible = true;
-                if(logVisibilityCheck.equals("false")) logCurrentlyVisible = false;
-                setLogVisibility(logCurrentlyVisible);              
-        }
+        if(logVisibilityCheck.equals("true")) logCurrentlyVisible = true;
+        if(logVisibilityCheck.equals("false")) logCurrentlyVisible = false;
         
 
         String originalAutoStart = config.getProperty("autoStart", "false");
@@ -528,6 +526,7 @@ public class DownloadGUI extends JFrame
     }
 
     private void setLogVisibility(boolean makeVisible) {
+        if (makeVisible == logCurrentlyVisible) return; //Initial check if already has been set by config
         GridBagLayout layout = (GridBagLayout) getContentPane().getLayout();
         GridBagConstraints logGbc = layout.getConstraints(logWrapperPanel);
 
