@@ -88,8 +88,11 @@ public class DownloadGUI extends JFrame
             
             JPanel gapPanel = new JPanel();
 
+            JPanel folderWrapperPanel = new JPanel(new BorderLayout());
             JButton folderSelectButton = new JButton("Select Folder");
-            
+            JLabel openFolderLabel = new JLabel("<html><a href=''>Open folder</a></html>");
+            JPanel folderLinkPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+
             downloadBtn = new JButton("DOWNLOAD");
 
             // POSISTIONING
@@ -121,7 +124,7 @@ public class DownloadGUI extends JFrame
             gbc.gridwidth = 1;
             gbc.weightx = 0; 
             gbc.weighty = 0;
-            add(folderSelectButton, gbc);
+            add(folderWrapperPanel, gbc);
 
             gbc.gridx = 8;
             gbc.gridwidth = 1;
@@ -207,6 +210,7 @@ public class DownloadGUI extends JFrame
             folderSelectButton.setPreferredSize(new Dimension(110, 50));
             folderSelectButton.setMinimumSize(new Dimension(110, 50));
             folderSelectButton.addActionListener(e -> {
+                // Try to swap look and feel for just file explorer
                 try {
                     LookAndFeel previousLF = UIManager.getLookAndFeel();
                     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -218,7 +222,7 @@ public class DownloadGUI extends JFrame
                     
                     if (result == JFileChooser.APPROVE_OPTION) {
                         selectedDirectory = chooser.getSelectedFile().getAbsolutePath();
-                        String message = "Selected folder: " + selectedDirectory;
+                        String message = "Selected folder: " + selectedDirectory + "\n";
                         System.out.println(message);
                         logArea.append(message);
                     } else {
@@ -231,6 +235,35 @@ public class DownloadGUI extends JFrame
                 }
                 constructCommand();
             });
+            //Hyper link open selected folder in explorer
+            openFolderLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+            openFolderLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            openFolderLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseClicked(java.awt.event.MouseEvent e) {
+                    try {
+                        if (selectedDirectory != null && !selectedDirectory.isEmpty()) {
+                            File dirToOpen = new File(selectedDirectory);
+                            if (dirToOpen.exists()) {
+                                Desktop.getDesktop().open(dirToOpen); // Opens the folder in OS file explorer
+                            } else {
+                                popupMessage("The selected folder no longer exists.");
+                            }
+                        } else {
+                            popupMessage("Please select a folder first.");
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        logArea.append(ex.toString() +"\n");
+                        popupMessage("Could not open the folder, sorry: " + ex); 
+                    }
+                }
+            });
+
+            folderLinkPanel.add(openFolderLabel);
+            folderWrapperPanel.add(folderSelectButton, BorderLayout.CENTER);
+            folderWrapperPanel.add(folderLinkPanel, BorderLayout.SOUTH);
+
 
             // Download Button
             downloadBtn.setForeground(new Color(0, 0, 0));
@@ -311,7 +344,7 @@ public class DownloadGUI extends JFrame
             gbc.gridy = 2;
             gbc.gridwidth = 5;
             gbc.weightx = 0.6;
-            // Removed explicit weighty here; it inherently carries over 0.3 from qualityPanel like the old code.
+            // Removed explicit weighty here; it inherently carries over 0.3 from qualityPanel
             add(timelineSelector, gbc);
 
             // PROPERTIES
@@ -499,7 +532,7 @@ public class DownloadGUI extends JFrame
 
         // Directory
         File savedDir = new File(config.getProperty("directory", ""));
-        if(savedDir.exists() && savedDir.isDirectory() && savedDir != null) {   
+        if(savedDir != null && savedDir.exists() && savedDir.isDirectory()) {   
             selectedDirectory = config.getProperty("directory", "");
         }
 
@@ -707,17 +740,17 @@ public class DownloadGUI extends JFrame
         if(selectedDirectory != null && !selectedDirectory.isEmpty())
         {
             command.add("-o");
-            command.add(File.separator + selectedDirectory + File.separator + "\"" + fileName.toString() + "\"" + File.separator);
+            command.add(File.separator + selectedDirectory + File.separator + "\"" + fileName.toString() + "\"");
         } else {
             command.add("-o");
             command.add("\"" + fileName.toString() + "\"");
         }
-
+        
         commandBar.setText(String.join(" ", command).trim());  
-    
     }
-
-    private void setupCommandBarListeners() {
+    
+    private void setupCommandBarListeners()
+    {
         // Listen for typing in the URL field
         urlField.getDocument().addDocumentListener(new DocumentListener() {
             public void changedUpdate(DocumentEvent e) { constructCommand(); }
@@ -734,7 +767,7 @@ public class DownloadGUI extends JFrame
 
         timelineSelector.addPropertyChangeListener("rangeChanged", evt -> constructCommand());
     }
-    
+
     public void popupMessage(String message)
     {
         JOptionPane.showMessageDialog(this, message);

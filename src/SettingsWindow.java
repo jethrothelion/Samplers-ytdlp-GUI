@@ -206,11 +206,17 @@ public class SettingsWindow extends JDialog
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL; // Horizontal so checkbox doesn't stretch weirdly
 
+        // Auto start box
         autoStartCheckbox = new JCheckBox("Auto-start download when URL is pasted");
         autoStartCheckbox.setFocusPainted(false);
 
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 1.0;
         panel.add(autoStartCheckbox, gbc);
+
+        // YTDLP UPDATE
+        JButton ytdlpUpdateBttn = new JButton("Attempt yt-dlp update");
+        
+        panel.add(ytdlpUpdateBttn);
 
         // Blank space at bottom
         gbc.gridx = 0; gbc.gridy = 1; gbc.weighty = 1.0;
