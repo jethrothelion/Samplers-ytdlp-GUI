@@ -17,16 +17,19 @@ public class SettingsWindow extends JDialog
     private JTextField ytdlpPathField;
     private JTextField ffmpegPathField;
     private JButton browseDirBtn;
+    private JButton updateYTDLP;
 
     private JComboBox<String> themeDropdown;
 
     private JCheckBox autoStartCheckbox;
+    private JCheckBox openWhenDone;
+
 
     private JButton saveBtn;
     private JButton closeBtn;
 
     String configPath = System.getProperty("user.home") + File.separator + "YoutubeDownloaderConfig.properties";
-
+    DownloadManager downloader = new DownloadManager();
 
     public void initialization()
     {
@@ -108,7 +111,7 @@ public class SettingsWindow extends JDialog
     }
 
     // ==========================================================
-    // MODULE PANELS (Designed for easy expansion)
+    // RIGHT SIDE MODULE PANELS 
     // ==========================================================
 
     private JPanel createPathsPanel()
@@ -151,11 +154,22 @@ public class SettingsWindow extends JDialog
         JLabel ytdlpLabel = new JLabel("YT-DLP Path:");
         ytdlpPathField = new JTextField();
         ytdlpPathField.setBorder(new LineBorder(Color.BLACK, 2));
+        
+        JButton updateYTDLP = new JButton("Update yt-dlp");
+        updateYTDLP.setBorder(new LineBorder(Color.BLACK, 2));
+        updateYTDLP.setBackground(Color.WHITE);
+        
+        updateYTDLP.addActionListener(e -> {
+
+        });
+
 
         gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0;
         panel.add(ytdlpLabel, gbc);
-        gbc.gridx = 1; gbc.gridwidth = 2; gbc.weightx = 1.0;
+        gbc.gridx = 1; gbc.gridwidth = 1; gbc.weightx = 1.0;
         panel.add(ytdlpPathField, gbc);
+        gbc.gridx = 2; gbc.weightx = 0; gbc.gridwidth = 1;
+        panel.add(updateYTDLP, gbc);
 
         // --- FFmpeg Path ---
         JLabel ffmpegLabel = new JLabel("FFmpeg Path:");
@@ -213,16 +227,28 @@ public class SettingsWindow extends JDialog
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 1.0;
         panel.add(autoStartCheckbox, gbc);
 
-        // YTDLP UPDATE
-        JButton ytdlpUpdateBttn = new JButton("Attempt yt-dlp update");
-        
-        panel.add(ytdlpUpdateBttn);
+        // Open folder on download complete 
+        openWhenDone = new JCheckBox("Open file in folder explorer on finished download");
+        openWhenDone.setFocusPainted(false);
+
+        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 1.0;
+        panel.add(openWhenDone, gbc);
 
         // Blank space at bottom
-        gbc.gridx = 0; gbc.gridy = 1; gbc.weighty = 1.0;
+        gbc.gridx = 0; gbc.gridy = 2; gbc.weighty = 1.0;
         panel.add(new JLabel(""), gbc);
 
         return panel;
+    }
+
+    private void updateYTDLP()
+    {
+
+        downloader.Download("", new DownloadListener()
+        {
+            
+        });
+
     }
 
     // ==========================================================
@@ -241,6 +267,7 @@ public class SettingsWindow extends JDialog
         // Appearance & Behavior
         config.setProperty("theme", themeDropdown.getSelectedItem().toString());
         config.setProperty("autoStart", String.valueOf(autoStartCheckbox.isSelected()));
+        config.setProperty("openWhenDone", String.valueOf(openWhenDone.isSelected()));
 
         config.save(); // Writes everything to the file once
         
@@ -262,5 +289,6 @@ public class SettingsWindow extends JDialog
 
         // Behavior
         autoStartCheckbox.setSelected(Boolean.parseBoolean(config.getProperty("autoStart", "false")));
+        openWhenDone.setSelected(Boolean.parseBoolean(config.getProperty("openWhenDone", "false")));
     }
 }

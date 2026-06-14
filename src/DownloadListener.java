@@ -1,7 +1,7 @@
 public interface DownloadListener {
-    void onProgress(int progress);
-    void onError(String errorMessage);
-    void onComplete(boolean success);
-    void onOutput(String output);
-    void onMessage(String message);
+    default void onProgress(int progress) {}
+    default void onError(String errorMessage) {}
+    default void onComplete(boolean success) {}
+    default void onOutput(String output) {}
+    default void onMessage(String message) {}
 }
