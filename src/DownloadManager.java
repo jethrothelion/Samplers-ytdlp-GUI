@@ -10,7 +10,7 @@ public class DownloadManager
 {
     private Process activeProcess;
 
-    public void Download(String commandLine, DownloadListener listener)
+    public void Download(String commandLine, DownloadListener listener, Boolean findPrecent, boolean findObjective)
     {
     
         List<String> command = new ArrayList<>();
@@ -42,7 +42,7 @@ public class DownloadManager
                     while ((errorLine = stderr.readLine()) != null) {
                         if(listener != null)
                         {
-                            listener.onOutput("yt-dlp Log/Error: " + commandLine);
+                            listener.onOutput("yt-dlp Log/Error: " + errorLine);
                         }
                     }
                 } catch (Exception e) {
@@ -57,11 +57,17 @@ public class DownloadManager
             while ((outputLine = stdout.readLine()) != null) {
                 listener.onOutput(outputLine);
 
-                int precent = calculateProgress(outputLine);
-                String objective = calcutateObjective(outputLine); 
                 if (listener != null) {
-                    listener.onProgress(precent);
-                    listener.onMessage(objective);
+                    if(findPrecent)
+                    {
+                        int precent = calculateProgress(outputLine);
+                        listener.onProgress(precent);
+                    }
+                    if(findObjective)
+                    {
+                        String objective = calcutateObjective(outputLine); 
+                        listener.onMessage(objective);
+                    }    
                 }
             }
 

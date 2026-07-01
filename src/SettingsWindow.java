@@ -24,12 +24,12 @@ public class SettingsWindow extends JDialog
     private JCheckBox autoStartCheckbox;
     private JCheckBox openWhenDone;
 
-
     private JButton saveBtn;
     private JButton closeBtn;
 
     String configPath = System.getProperty("user.home") + File.separator + "YoutubeDownloaderConfig.properties";
     DownloadManager downloader = new DownloadManager();
+    private DownloadListener outputListener;
 
     public void initialization()
     {
@@ -159,9 +159,7 @@ public class SettingsWindow extends JDialog
         updateYTDLP.setBorder(new LineBorder(Color.BLACK, 2));
         updateYTDLP.setBackground(Color.WHITE);
         
-        updateYTDLP.addActionListener(e -> {
-
-        });
+        updateYTDLP.addActionListener(e -> updateYTDLP());
 
 
         gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0;
@@ -244,11 +242,9 @@ public class SettingsWindow extends JDialog
     private void updateYTDLP()
     {
 
-        downloader.Download("", new DownloadListener()
-        {
-            
-        });
-
+        downloader.Download(ytdlpPathField.getText() + " -U", outputListener, false, false);
+        //temp
+        System.out.println(ytdlpPathField.getText());
     }
 
     // ==========================================================
@@ -290,5 +286,10 @@ public class SettingsWindow extends JDialog
         // Behavior
         autoStartCheckbox.setSelected(Boolean.parseBoolean(config.getProperty("autoStart", "false")));
         openWhenDone.setSelected(Boolean.parseBoolean(config.getProperty("openWhenDone", "false")));
+    }
+
+    public void setOutputListener(DownloadListener listener)
+    {
+        this.outputListener = listener;
     }
 }

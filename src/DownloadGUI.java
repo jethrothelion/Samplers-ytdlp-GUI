@@ -156,7 +156,8 @@ public class DownloadGUI extends JFrame
             // URL input box
             urlField.setBorder(new LineBorder(Color.BLACK, 2));
             urlField.setForeground(Color.GRAY);    
-            
+            urlField.setPreferredSize(new Dimension(315, 60));
+
             urlDebounceTimer = new Timer(1000, e -> {
                 if (urlField.getText().contains("youtube.com"))
                 {
@@ -195,10 +196,8 @@ public class DownloadGUI extends JFrame
             typePanel.add(videoBtn);
             typePanel.add(audioBtn);
 
-
-            
             // Gap Panel
-            gapPanel.setPreferredSize(new Dimension(80, 1));
+            gapPanel.setMinimumSize(new Dimension(100, 1));
 
             // Folder Select Button
             Icon folderIcon = locator.getIcon("folderIcon.png");
@@ -480,6 +479,7 @@ public class DownloadGUI extends JFrame
     
    // run settings window
     SettingsWindow settings = new SettingsWindow();
+    settings.setOutputListener(createLogListener("YTDLP Update"));
     settings.initialization();
 
     // Clear Dimming layer
@@ -547,13 +547,15 @@ public class DownloadGUI extends JFrame
         if(logVisibilityCheck.equals("true")) logCurrentlyVisible = true;
         if(logVisibilityCheck.equals("false")) logCurrentlyVisible = false;
         
-
+        // Auto start download on input into URLfield
         String originalAutoStart = config.getProperty("autoStart", "false");
         if(originalAutoStart != null) 
         {   
             autoStart = Boolean.parseBoolean(originalAutoStart);
         }
 
+
+        // Open folder when done 
 
         constructCommand();
     }
@@ -804,6 +806,53 @@ public class DownloadGUI extends JFrame
 
     }
     
+    public DownloadListener createLogListener(String taskString)
+    {
+        return new DownloadListener() {
+            @Override
+            public void onProgress(int progress) {
+                SwingUtilities.invokeLater(() -> updateProgress(progress));
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                logArea.append("ERROR: " + errorMessage + "\n");
+
+                logArea.setCaretPosition(logArea.getDocument().getLength());
+            }
+
+            @Override
+            public void onComplete(boolean success) {
+                SwingUtilities.invokeLater(() -> {
+                    if (success) {
+                        logArea.append("--- " + taskString + " COMPLETE ---\n");
+                        popupMessage(taskString + " completed successfully!");
+                        progressBar.setValue(0);
+                    } else {    
+                        logArea.append("--- " + taskString + " FAILED ---\n");
+                        popupMessage( taskString + " failed, Check the console for details.");
+                        progressBar.setValue(0);
+                    }
+                    changeDownloadButton(true);    
+                });
+            }
+
+            @Override
+            public void onOutput(String output) {
+                SwingUtilities.invokeLater(() -> {
+                    logArea.append(output + "\n");
+                    logArea.setCaretPosition(logArea.getDocument().getLength());
+                });
+            }
+
+            // Message is progress state from ran application
+            @Override
+            public void onMessage(String message) {
+                SwingUtilities.invokeLater(() -> downloadMessage.setText(message));
+            }
+        };
+    }
+    
 
     public void startDownload(String command)
     {
@@ -818,49 +867,8 @@ public class DownloadGUI extends JFrame
             protected Void doInBackground() throws Exception 
             {
                 downloader = new DownloadManager();
-                downloader.Download(command, new DownloadListener()
-                {
-                    @Override
-                    public void onProgress(int progress) {
-                        publish(progress);
-                    }
+                downloader.Download(command, createLogListener("Video Download"), true, true);
 
-                    @Override
-                    public void onError(String errorMessage) {
-                        logArea.append("ERROR: " + errorMessage + "\n");
-
-                        logArea.setCaretPosition(logArea.getDocument().getLength());
-                    }
-
-                    @Override
-                    public void onComplete(boolean success) {
-                        SwingUtilities.invokeLater(() -> {
-                            if (success) {
-                                logArea.append("--- DOWNLOAD COMPLETE ---\n");
-                                popupMessage("Download completed successfully!");
-                                progressBar.setValue(0);
-                            } else {    
-                                logArea.append("--- DOWNLOAD FAILED ---\n");
-                                popupMessage("Download failed, Check the console for details.");
-                                progressBar.setValue(0);
-                            }
-                            changeDownloadButton(true);   
-                        });
-                    }
-
-                    @Override
-                    public void onOutput(String output) {
-                        SwingUtilities.invokeLater(() -> {
-                            logArea.append(output + "\n");
-                            logArea.setCaretPosition(logArea.getDocument().getLength());
-                        });
-                    }
-                    @Override
-                    public void onMessage(String message) {
-                        SwingUtilities.invokeLater(() -> downloadMessage.setText(message));
-                    }
-           });
-                
                 return null;
             }
 
