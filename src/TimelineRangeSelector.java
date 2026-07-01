@@ -136,7 +136,7 @@ public class TimelineRangeSelector extends JPanel
 
         if (hours > 0 )
         {
-            return String.format("%d:$02d:%02d", hours, minutes, seconds); 
+            return String.format("%d:%02d:%02d", hours, minutes, seconds); 
         }
         else
         {
