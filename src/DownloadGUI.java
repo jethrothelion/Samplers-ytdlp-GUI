@@ -48,6 +48,8 @@ public class DownloadGUI extends JFrame
 
     // settings variables
     boolean autoStart = false;
+    boolean openWhenDone = false;
+    boolean popUp;
 
     public void initialization()
         {
@@ -170,7 +172,9 @@ public class DownloadGUI extends JFrame
                 public void changedUpdate(DocumentEvent e) { urlDebounceTimer.restart(); }
                 public void removeUpdate(DocumentEvent e) { urlDebounceTimer.restart(); }
                 //AUTO start setting starts download on inputed url
-                public void insertUpdate(DocumentEvent e) { urlDebounceTimer.restart(); if(autoStart) startDownload(commandBar.getText());}
+                public void insertUpdate(DocumentEvent e) { 
+                    urlDebounceTimer.restart();
+                    if(autoStart && urlField.getText().contains("https")) startDownload(commandBar.getText());}
             });
             
             urlField.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -269,7 +273,7 @@ public class DownloadGUI extends JFrame
             downloadBtn.setBorder(new LineBorder(new Color(0, 153, 51), 3));
             downloadBtn.setFont(new Font("Arial", Font.BOLD, 16));
             downloadBtn.setBackground(Color.GREEN);
-            downloadBtn.setPreferredSize(new Dimension(5, 30));
+            downloadBtn.setPreferredSize(new Dimension(36, 30));
             downloadBtn.addActionListener(e -> startDownload(commandBar.getText()));
 
 
@@ -541,21 +545,30 @@ public class DownloadGUI extends JFrame
         if (type.equals("audio")) audioBtn.setSelected(true);
         if (type.equals("video")) videoBtn.setSelected(true);
 
-
         // Log area visibility
         String logVisibilityCheck = config.getProperty("logVisibility", "True");
         if(logVisibilityCheck.equals("true")) logCurrentlyVisible = true;
         if(logVisibilityCheck.equals("false")) logCurrentlyVisible = false;
         
         // Auto start download on input into URLfield
-        String originalAutoStart = config.getProperty("autoStart", "false");
-        if(originalAutoStart != null) 
+        String stringAutoStart = config.getProperty("autoStart", "false");
+        if(stringAutoStart != null) 
         {   
-            autoStart = Boolean.parseBoolean(originalAutoStart);
+            autoStart = Boolean.parseBoolean(stringAutoStart);
         }
 
-
         // Open folder when done 
+        String stringOpenWhenDone = config.getProperty("openWhenDone", "false");
+        if(stringOpenWhenDone != null)
+        {
+            openWhenDone = Boolean.parseBoolean(stringOpenWhenDone);
+        }
+
+        String stringPopUp = config.getProperty("popUp", "true");
+        if(stringPopUp != null)
+        {
+            popUp = Boolean.parseBoolean(stringPopUp);
+        }
 
         constructCommand();
     }
@@ -826,11 +839,13 @@ public class DownloadGUI extends JFrame
                 SwingUtilities.invokeLater(() -> {
                     if (success) {
                         logArea.append("--- " + taskString + " COMPLETE ---\n");
-                        popupMessage(taskString + " completed successfully!");
+                        if(popUp){popupMessage(taskString + " completed successfully!");}
+
                         progressBar.setValue(0);
                     } else {    
                         logArea.append("--- " + taskString + " FAILED ---\n");
-                        popupMessage( taskString + " failed, Check the console for details.");
+                        if(popUp){popupMessage( taskString + " failed, Check the console for details.");}
+                        
                         progressBar.setValue(0);
                     }
                     changeDownloadButton(true);    

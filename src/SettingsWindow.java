@@ -22,7 +22,8 @@ public class SettingsWindow extends JDialog
     private JComboBox<String> themeDropdown;
 
     private JCheckBox autoStartCheckbox;
-    private JCheckBox openWhenDone;
+    private JCheckBox openWhenDoneCheckBox;
+    private JCheckBox popUpCheckBox;
 
     private JButton saveBtn;
     private JButton closeBtn;
@@ -226,11 +227,18 @@ public class SettingsWindow extends JDialog
         panel.add(autoStartCheckbox, gbc);
 
         // Open folder on download complete 
-        openWhenDone = new JCheckBox("Open file in folder explorer on finished download");
-        openWhenDone.setFocusPainted(false);
+        openWhenDoneCheckBox = new JCheckBox("Open file in folder explorer on finished download");
+        openWhenDoneCheckBox.setFocusPainted(false);
 
         gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 1.0;
-        panel.add(openWhenDone, gbc);
+        panel.add(openWhenDoneCheckBox, gbc);
+
+        // Pop up notifaction on download complete
+        popUpCheckBox = new JCheckBox("When done download have a pop up notifaction");
+        popUpCheckBox.setFocusPainted(false);
+
+        gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 1.0;
+        panel.add(popUpCheckBox, gbc);
 
         // Blank space at bottom
         gbc.gridx = 0; gbc.gridy = 2; gbc.weighty = 1.0;
@@ -243,8 +251,6 @@ public class SettingsWindow extends JDialog
     {
 
         downloader.Download(ytdlpPathField.getText() + " -U", outputListener, false, false);
-        //temp
-        System.out.println(ytdlpPathField.getText());
     }
 
     // ==========================================================
@@ -263,7 +269,8 @@ public class SettingsWindow extends JDialog
         // Appearance & Behavior
         config.setProperty("theme", themeDropdown.getSelectedItem().toString());
         config.setProperty("autoStart", String.valueOf(autoStartCheckbox.isSelected()));
-        config.setProperty("openWhenDone", String.valueOf(openWhenDone.isSelected()));
+        config.setProperty("openWhenDoneCheckBox", String.valueOf(openWhenDoneCheckBox.isSelected()));
+        config.setProperty("popUp", String.valueOf(popUpCheckBox.isSelected()));
 
         config.save(); // Writes everything to the file once
         
@@ -285,7 +292,8 @@ public class SettingsWindow extends JDialog
 
         // Behavior
         autoStartCheckbox.setSelected(Boolean.parseBoolean(config.getProperty("autoStart", "false")));
-        openWhenDone.setSelected(Boolean.parseBoolean(config.getProperty("openWhenDone", "false")));
+        openWhenDoneCheckBox.setSelected(Boolean.parseBoolean(config.getProperty("openWhenDoneCheckBox", "false")));
+        popUpCheckBox.setSelected(Boolean.parseBoolean(config.getProperty("popUp", "true")));
     }
 
     public void setOutputListener(DownloadListener listener)
