@@ -249,14 +249,20 @@ public class SettingsWindow extends JDialog
 
     private void updateYTDLP()
     {
-
-        downloader.Download(ytdlpPathField.getText() + " -U", outputListener, false, false);
+        SwingWorker<Void, Integer> downloadWorker = new SwingWorker<Void, Integer>() {
+            @Override
+            protected Void doInBackground() throws Exception 
+            {
+                downloader.Download(ytdlpPathField.getText() + " -U", outputListener, false, false);
+                return null;
+            }
+        };
+        downloadWorker.execute();
     }
 
     // ==========================================================
     // CONFIGURATION SAVING & LOADING
     // ==========================================================
-
     public void saveConfig()
     {
         ConfigManager config = ConfigManager.getInstance();
