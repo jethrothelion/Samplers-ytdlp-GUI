@@ -698,7 +698,7 @@ public class DownloadGUI extends JFrame
     {
         List<String> command = new ArrayList<>();
 
-        StringBuffer fileName = new StringBuffer("%(title), %(author)");
+        StringBuffer fileName = new StringBuffer("%(title) %(author)");
 
         command.add(locator.getYtdlpPath()); // Add the executable path first
 
