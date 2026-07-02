@@ -49,7 +49,7 @@ public class DownloadGUI extends JFrame
     // settings variables
     boolean autoStart = false;
     boolean openWhenDone = false;
-    boolean popUp;
+    boolean popUp = true;
 
     public void initialization()
         {
@@ -698,7 +698,7 @@ public class DownloadGUI extends JFrame
     {
         List<String> command = new ArrayList<>();
 
-        StringBuffer fileName = new StringBuffer("%(title)s.%(ext)s");
+        StringBuffer fileName = new StringBuffer("%(title), %(author)");
 
         command.add(locator.getYtdlpPath()); // Add the executable path first
 
@@ -732,6 +732,7 @@ public class DownloadGUI extends JFrame
         {
             String length = (int)(timelineSelector.getStartTime()) + "-" + (int)(timelineSelector.getEndTime());
 
+            command.add("--force-keyframes-at-cuts");
             command.add("--download-sections");
             command.add("\"*" + length + "\"");
 

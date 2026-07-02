@@ -241,7 +241,7 @@ public class SettingsWindow extends JDialog
         panel.add(popUpCheckBox, gbc);
 
         // Blank space at bottom
-        gbc.gridx = 0; gbc.gridy = 2; gbc.weighty = 1.0;
+        gbc.gridx = 0; gbc.gridy = 3; gbc.weighty = 1.0;
         panel.add(new JLabel(""), gbc);
 
         return panel;
