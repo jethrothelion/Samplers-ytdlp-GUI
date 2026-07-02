@@ -1,6 +1,7 @@
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +46,8 @@ public class DownloadGUI extends JFrame
     
     // prevent spamming yt-dlp processes
     private Timer urlDebounceTimer; 
+
+    private File lastDownloadedFile;
 
     // settings variables
     boolean autoStart = false;
@@ -174,8 +177,8 @@ public class DownloadGUI extends JFrame
                 //AUTO start setting starts download on inputed url
                 public void insertUpdate(DocumentEvent e) { 
                     urlDebounceTimer.restart();
-                    if(autoStart && urlField.getText().contains("https")) startDownload(commandBar.getText());}
-            });
+                    if(autoStart && urlField.getText().contains("https")){ constructCommand(); startDownload(commandBar.getText());}
+                }});
             
             urlField.addFocusListener(new java.awt.event.FocusAdapter() {
                 @Override
@@ -547,8 +550,8 @@ public class DownloadGUI extends JFrame
 
         // Log area visibility
         String logVisibilityCheck = config.getProperty("logVisibility", "True");
-        if(logVisibilityCheck.equals("true")) logCurrentlyVisible = true;
-        if(logVisibilityCheck.equals("false")) logCurrentlyVisible = false;
+        if(logVisibilityCheck.equals("true")) { logCurrentlyVisible = true; setLogVisibility(true);}
+        if(logVisibilityCheck.equals("false")) { logCurrentlyVisible = false; setLogVisibility(false);};
         
         // Auto start download on input into URLfield
         String stringAutoStart = config.getProperty("autoStart", "false");
@@ -698,7 +701,7 @@ public class DownloadGUI extends JFrame
     {
         List<String> command = new ArrayList<>();
 
-        StringBuffer fileName = new StringBuffer("%(title) %(author)");
+        StringBuffer fileName = new StringBuffer("%(title)s %(author)s");
 
         command.add(locator.getYtdlpPath()); // Add the executable path first
 
@@ -756,7 +759,7 @@ public class DownloadGUI extends JFrame
         if(selectedDirectory != null && !selectedDirectory.isEmpty())
         {
             command.add("-o");
-            command.add(File.separator + selectedDirectory + File.separator + "\"" + fileName.toString() + "\"");
+            command.add("\"" + selectedDirectory + File.separator + fileName.toString() + "\"");
         } else {
             command.add("-o");
             command.add("\"" + fileName.toString() + "\"");
@@ -820,6 +823,23 @@ public class DownloadGUI extends JFrame
 
     }
     
+    private void openFileLocation(File file)
+    {
+        try {
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.contains("win")) {
+                new ProcessBuilder("explorer.exe", "/select,\"" + file.getAbsolutePath() + "\"").start();
+            } else if (os.contains("mac")) {
+                new ProcessBuilder("open", "-R", file.getAbsolutePath()).start();
+            } else {
+                Desktop.getDesktop().open(file.getParentFile());
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            logArea.append("Could not open file location: " + ex.getMessage() + "\n");
+        }
+    }
+
     public DownloadListener createLogListener(String taskString)
     {
         return new DownloadListener() {
@@ -840,8 +860,9 @@ public class DownloadGUI extends JFrame
                 SwingUtilities.invokeLater(() -> {
                     if (success) {
                         logArea.append("--- " + taskString + " COMPLETE ---\n");
-                        if(popUp){popupMessage(taskString + " completed successfully!");}
-
+                        if(popUp){popupMessage(taskString + " DONE!");}
+                        
+                        if(openWhenDone && lastDownloadedFile != null) openFileLocation(lastDownloadedFile);
                         progressBar.setValue(0);
                     } else {    
                         logArea.append("--- " + taskString + " FAILED ---\n");
@@ -858,6 +879,11 @@ public class DownloadGUI extends JFrame
                 SwingUtilities.invokeLater(() -> {
                     logArea.append(output + "\n");
                     logArea.setCaretPosition(logArea.getDocument().getLength());
+
+                    File possibleFile = new File(output.trim());
+                    if (possibleFile.isFile()) {
+                        lastDownloadedFile = possibleFile;
+                    }
                 });
             }
 
@@ -876,6 +902,7 @@ public class DownloadGUI extends JFrame
         System.out.println(commandMsg);
         logArea.append(commandMsg);
         
+        lastDownloadedFile = null;
         changeDownloadButton(false);
 
         SwingWorker<Void, Integer> downloadWorker = new SwingWorker<Void, Integer>() {

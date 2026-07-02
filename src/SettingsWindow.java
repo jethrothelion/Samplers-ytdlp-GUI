@@ -269,7 +269,7 @@ public class SettingsWindow extends JDialog
         // Appearance & Behavior
         config.setProperty("theme", themeDropdown.getSelectedItem().toString());
         config.setProperty("autoStart", String.valueOf(autoStartCheckbox.isSelected()));
-        config.setProperty("openWhenDoneCheckBox", String.valueOf(openWhenDoneCheckBox.isSelected()));
+        config.setProperty("openWhenDone", String.valueOf(openWhenDoneCheckBox.isSelected()));
         config.setProperty("popUp", String.valueOf(popUpCheckBox.isSelected()));
 
         config.save(); // Writes everything to the file once
@@ -292,7 +292,7 @@ public class SettingsWindow extends JDialog
 
         // Behavior
         autoStartCheckbox.setSelected(Boolean.parseBoolean(config.getProperty("autoStart", "false")));
-        openWhenDoneCheckBox.setSelected(Boolean.parseBoolean(config.getProperty("openWhenDoneCheckBox", "false")));
+        openWhenDoneCheckBox.setSelected(Boolean.parseBoolean(config.getProperty("openWhenDone", "false")));
         popUpCheckBox.setSelected(Boolean.parseBoolean(config.getProperty("popUp", "true")));
     }
 
