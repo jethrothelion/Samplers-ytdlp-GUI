@@ -28,7 +28,13 @@ public class DependencyLocator
                 }
             }
             
-            return process.waitFor() == 0;
+            boolean finished = process.waitFor(8, java.util.concurrent.TimeUnit.SECONDS);
+            if (!finished) {
+                process.destroyForcibly();
+                System.err.println(executableCmd + " check timed out after 8s.");
+                return false;
+            }
+            return process.exitValue() == 0;
         } catch (Exception e) {
             return false;
         }
