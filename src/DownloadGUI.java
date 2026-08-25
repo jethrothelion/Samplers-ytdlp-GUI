@@ -640,8 +640,11 @@ public class DownloadGUI extends JFrame
             return true;
         }
         String message = "Warning: Could not verify " + appName + ".\nIt may not be in your system PATH or application folder. If downloads fail, please ensure it is installed.\n";
-        popupMessage(message);
-        logArea.append(message);
+        System.out.println(appName + " check: FAILED");
+        SwingUtilities.invokeLater(() -> {
+            popupMessage(message);
+            logArea.append(message);
+        });
         return false;
     }
 
