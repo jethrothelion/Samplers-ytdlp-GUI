@@ -2,4 +2,7 @@
 yt-dlp
 *.mp3
 *.webm
-
+bin/
+*.class
+*.part
+*.mp4

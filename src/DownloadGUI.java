@@ -342,7 +342,7 @@ public class DownloadGUI extends JFrame
             gbc.gridy = 2;
             gbc.gridwidth = 4;
             gbc.weightx = 0.4;
-            gbc.weighty = 0.3;
+            gbc.weighty = 0;
             gbc.ipady = 0; // Ensure reset
             add(qualityPanel, gbc);
 
@@ -357,8 +357,8 @@ public class DownloadGUI extends JFrame
             qualityPanel.setBorder(new LineBorder(Color.BLACK, 2));
             qualityPanel.setLayout(new BoxLayout(qualityPanel, BoxLayout.Y_AXIS));
             
-            highestButton.setActionCommand("3");
             highestButton.setSelected(true); 
+            highestButton.setActionCommand("3");
             mediumButton.setActionCommand("2");
             lowestButton.setActionCommand("1");
 
