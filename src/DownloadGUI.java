@@ -453,11 +453,11 @@ public class DownloadGUI extends JFrame
 
             // --- FINAL SETTING RUNNERS & INITIALIZATION ---
             
+            runStartupChecks();
+
             constructCommand();
             setupCommandBarListeners();
             readConfig();
-
-            runStartupChecks();
             
             setLocationRelativeTo(null);
             setVisible(true);
