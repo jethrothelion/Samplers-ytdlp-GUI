@@ -69,6 +69,14 @@ public class DependencyLocator
         String os = System.getProperty("os.name").toLowerCase();
         String executableName = os.contains("windows") ? "yt-dlp.exe" : "yt-dlp";
         
+        // 1. Try PATH First
+        if (checkProcessSilently(executableName, "--version")) {
+            System.out.println("yt-dlp found in system PATH.");
+            cachedYtdlpPath = executableName;
+            return cachedYtdlpPath;
+        }
+
+        // 2. Try Folder if not found in PATH
         File jarDir = getJarDirectory();
         if (jarDir != null)
         {
@@ -76,25 +84,18 @@ public class DependencyLocator
             {
                 File executableFile = new File(jarDir, executableName);
                 
-                // 1. Try Folder First (Standard for yt-dlp)
                 if (executableFile.exists()) 
                 {
                     if (!executableFile.canExecute()) {
                         executableFile.setExecutable(true);
                     }
+                    System.out.println("YT-DLP found in application folder.");
                     cachedYtdlpPath = executableFile.getAbsolutePath();
                     return cachedYtdlpPath;
                 } 
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-
-        // 2. Try PATH if not found in folder
-        if (checkProcessSilently(executableName, "--version")) {
-            System.out.println("yt-dlp found in system PATH.");
-            cachedYtdlpPath = executableName;
-            return cachedYtdlpPath;
         }
 
         System.err.println("yt-dlp not found in folder or PATH.");
