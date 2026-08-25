@@ -620,15 +620,14 @@ public class DownloadGUI extends JFrame
 
     // Dedicated method to ensure checks only run once
     private void runStartupChecks() {
-        if (hasVerifiedExecutables) {
-            return; // Exit immediately if already checked
-        }
-        
+        if (hasVerifiedExecutables) return; // Exit immediately if already checked
+        hasVerifiedExecutables = true; // Mark as done so it never runs again
+
+
         System.out.println("Running initial dependency checks...");
         verifyExecutable(locator.getYtdlpPath(), "--version", "yt-dlp");
         verifyExecutable(locator.getFFmpegPath(), "-version", "ffmpeg");
         
-        hasVerifiedExecutables = true; // Mark as done so it never runs again
     }
 
     public boolean verifyExecutable(String path, String versionFlag, String appName)
