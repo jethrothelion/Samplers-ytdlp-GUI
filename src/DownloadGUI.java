@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -38,6 +40,8 @@ public class DownloadGUI extends JFrame
     boolean logCurrentlyVisible = true;
     private int savedLogHeight = 100;
 
+    private static final ExecutorService checkExecutor = Executors.newFixedThreadPool(2);
+    //^ Threading for background dependancy check ^
     private int videoDuration = -1; // Duration in seconds, -1 means unknown
     private boolean hasVerifiedExecutables = false; // Flag to prevent duplicate checks
 
@@ -449,11 +453,11 @@ public class DownloadGUI extends JFrame
 
             // --- FINAL SETTING RUNNERS & INITIALIZATION ---
             
+            runStartupChecks();
+
             constructCommand();
             setupCommandBarListeners();
             readConfig();
-
-            runStartupChecks();
             
             setLocationRelativeTo(null);
             setVisible(true);
@@ -620,15 +624,13 @@ public class DownloadGUI extends JFrame
 
     // Dedicated method to ensure checks only run once
     private void runStartupChecks() {
-        if (hasVerifiedExecutables) {
-            return; // Exit immediately if already checked
-        }
-        
-        System.out.println("Running initial dependency checks...");
-        verifyExecutable(locator.getYtdlpPath(), "--version", "yt-dlp");
-        verifyExecutable(locator.getFFmpegPath(), "-version", "ffmpeg");
-        
+        if (hasVerifiedExecutables) return; // Exit immediately if already checked
         hasVerifiedExecutables = true; // Mark as done so it never runs again
+
+
+        System.out.println("Running initial dependency checks...");
+        checkExecutor.submit(() -> verifyExecutable(locator.getYtdlpPath(), "--version", "yt-dlp"));
+        checkExecutor.submit(() -> verifyExecutable(locator.getFFmpegPath(), "-version", "ffmpeg"));        
     }
 
     public boolean verifyExecutable(String path, String versionFlag, String appName)
@@ -638,8 +640,11 @@ public class DownloadGUI extends JFrame
             return true;
         }
         String message = "Warning: Could not verify " + appName + ".\nIt may not be in your system PATH or application folder. If downloads fail, please ensure it is installed.\n";
-        popupMessage(message);
-        logArea.append(message);
+        System.out.println("Path: " + path + "App Name: " + appName + " check: FAILED");
+        SwingUtilities.invokeLater(() -> {
+            popupMessage(message);
+            logArea.append(message);
+        });
         return false;
     }
 

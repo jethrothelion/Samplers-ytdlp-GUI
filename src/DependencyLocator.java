@@ -14,6 +14,25 @@ public class DependencyLocator
     private String cachedYtdlpPath = null;
     private String cachedFfmpegPath = null;
 
+    private File cachedJarDir = null;
+
+    private File getJarDirectory()
+    {
+        if (cachedJarDir != null) return cachedJarDir;
+
+        try
+        {
+            String classPath = DependencyLocator.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+            File jarFile = new File(classPath);
+            cachedJarDir = jarFile.getParentFile();
+            return cachedJarDir;            
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     // silent checker method that reads output to prevent process freezing
     public boolean checkProcessSilently(String executableCmd, String versionFlag) 
     {
@@ -28,13 +47,19 @@ public class DependencyLocator
                 }
             }
             
-            return process.waitFor() == 0;
+            boolean finished = process.waitFor(8, java.util.concurrent.TimeUnit.SECONDS);
+            if (!finished) {
+                process.destroyForcibly();
+                System.err.println(executableCmd + " check timed out after 8s.");
+                return false;
+            }
+            return process.exitValue() == 0;
         } catch (Exception e) {
             return false;
         }
     }
 
-    public String getYtdlpPath() 
+    public synchronized String getYtdlpPath() 
     {
         //returns imediately if already been found
         if (cachedYtdlpPath != null) {
@@ -43,32 +68,34 @@ public class DependencyLocator
 
         String os = System.getProperty("os.name").toLowerCase();
         String executableName = os.contains("windows") ? "yt-dlp.exe" : "yt-dlp";
-
-        try
-        {
-            String classPath = DependencyLocator.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
-            File jarFile = new File(classPath);
-            File jarDir = jarFile.getParentFile();
-            File executableFile = new File(jarDir, executableName);
-            
-            // 1. Try Folder First (Standard for yt-dlp)
-            if (executableFile.exists()) 
-            {
-                if (!executableFile.canExecute()) {
-                    executableFile.setExecutable(true);
-                }
-                cachedYtdlpPath = executableFile.getAbsolutePath();
-                return cachedYtdlpPath;
-            } 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // 2. Try PATH if not found in folder
+        
+        // 1. Try PATH First
         if (checkProcessSilently(executableName, "--version")) {
             System.out.println("yt-dlp found in system PATH.");
             cachedYtdlpPath = executableName;
             return cachedYtdlpPath;
+        }
+
+        // 2. Try Folder if not found in PATH
+        File jarDir = getJarDirectory();
+        if (jarDir != null)
+        {
+            try
+            {
+                File executableFile = new File(jarDir, executableName);
+                
+                if (executableFile.exists()) 
+                {
+                    if (!executableFile.canExecute()) {
+                        executableFile.setExecutable(true);
+                    }
+                    System.out.println("YT-DLP found in application folder.");
+                    cachedYtdlpPath = executableFile.getAbsolutePath();
+                    return cachedYtdlpPath;
+                } 
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         System.err.println("yt-dlp not found in folder or PATH.");
@@ -76,7 +103,7 @@ public class DependencyLocator
         return cachedYtdlpPath; 
     }
 
-    public String getFFmpegPath() 
+    public synchronized String getFFmpegPath() 
     {
         // Return immediately if we already found it before
         if (cachedFfmpegPath != null) {
@@ -94,24 +121,25 @@ public class DependencyLocator
         }
 
         // 2. Try Folder if not found in PATH
-        try
+        File jarDir = getJarDirectory();
+        if (jarDir != null)
         {
-            String classPath = DependencyLocator.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
-            File jarFile = new File(classPath);
-            File jarDir = jarFile.getParentFile();
-            File executableFile = new File(jarDir, executableName);
-            
-            if (executableFile.exists()) 
+            try
             {
-                if (!executableFile.canExecute()) {
-                    executableFile.setExecutable(true);
-                }
-                System.out.println("ffmpeg found in application folder.");
-                cachedFfmpegPath = executableFile.getAbsolutePath();
-                return cachedFfmpegPath;
-            } 
-        } catch (Exception e) {
-            e.printStackTrace();
+                File executableFile = new File(jarDir, executableName);
+                
+                if (executableFile.exists()) 
+                {
+                    if (!executableFile.canExecute()) {
+                        executableFile.setExecutable(true);
+                    }
+                    System.out.println("ffmpeg found in application folder.");
+                    cachedFfmpegPath = executableFile.getAbsolutePath();
+                    return cachedFfmpegPath;
+                } 
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         System.err.println("ffmpeg not found in PATH or folder.");
@@ -119,27 +147,26 @@ public class DependencyLocator
         return cachedFfmpegPath; 
     }
 
+    //Takes path to icon returns Icon object
     public Icon getIcon(String name)
     {
-        //Takes path to icon returns Icon object
-
-        // 1. Try to load from the executable/jar folder (same logic as yt-dlp)
-        try
+        File jarDir = getJarDirectory();
+        if (jarDir != null)
         {
-            // CHANGED: DownloadGUI.class to DependencyLocator.class
-            String classPath = DependencyLocator.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
-            File jarFile = new File(classPath);
-            File jarDir = jarFile.getParentFile();
-            File iconFile = new File(jarDir, name);
-            
-            if (iconFile.exists()) 
+            // 1. Try to load from the executable/jar folder
+            try
             {
-                ImageIcon icon = new ImageIcon(iconFile.getAbsolutePath());
-                Image scaledImage = icon.getImage().getScaledInstance(20, 20, java.awt.Image.SCALE_SMOOTH);
-                return new ImageIcon(scaledImage);
-            } 
-        } catch (Exception e) {
-            e.printStackTrace();
+                File iconFile = new File(jarDir, name);
+                
+                if (iconFile.exists()) 
+                {
+                    ImageIcon icon = new ImageIcon(iconFile.getAbsolutePath());
+                    Image scaledImage = icon.getImage().getScaledInstance(20, 20, java.awt.Image.SCALE_SMOOTH);
+                    return new ImageIcon(scaledImage);
+                } 
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         // 2. Fallback to the internal resource method
@@ -157,7 +184,6 @@ public class DependencyLocator
         {
             System.err.println("Warning: " + name + " not found in resources. Falling back to default.");
             
-            // CHANGED: Replaced popupMessage() with JOptionPane passing null for the parent component
             JOptionPane.showMessageDialog(null, "cant find " + name + " icon defaulting to os default save icon may not by there");
             
             if (name.equals("folderIcon.png"))
