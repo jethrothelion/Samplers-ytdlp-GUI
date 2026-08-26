@@ -39,6 +39,9 @@ public class DownloadGUI extends JFrame
     private JButton toggleLogBtn;
     boolean logCurrentlyVisible = true;
     private int savedLogHeight = 100;
+    int windowWidth;
+    int windowHeight;
+
 
     private static final ExecutorService checkExecutor = Executors.newFixedThreadPool(2);
     //^ Threading for background dependancy check ^
@@ -57,6 +60,7 @@ public class DownloadGUI extends JFrame
     boolean autoStart = false;
     boolean openWhenDone = false;
     boolean popUp = true;
+    boolean windowDimensionSave = true;
 
     public void initialization()
         {
@@ -69,16 +73,6 @@ public class DownloadGUI extends JFrame
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.insets = new Insets(10, 10, 10, 10);
             gbc.fill = GridBagConstraints.BOTH;
-            // window sizing load
-            try 
-            {
-                int width = Integer.parseInt(ConfigManager.getInstance().getProperty("windowWidth", "900"));
-                int height = Integer.parseInt(ConfigManager.getInstance().getProperty("windowHeight", "550"));
-             setSize(width, height);
-            } catch (NumberFormatException ex) {
-                setSize(900, 550);
-            }
-
 
             // --- ROW 0: URL Input, Media Type, Folders & Download ---
             
@@ -460,6 +454,15 @@ public class DownloadGUI extends JFrame
             readConfig();
             
             setLocationRelativeTo(null);
+
+            // window sizing load
+            try 
+            {
+                setSize(windowWidth, windowHeight);
+            } catch (NumberFormatException ex) {
+                setSize(900, 550);
+            }
+
             setVisible(true);
         }
     
@@ -521,8 +524,11 @@ public class DownloadGUI extends JFrame
         config.setProperty("type", type);
 
         // Window Size
-        config.setProperty("windowWidth", String.valueOf(getWidth()));
-        config.setProperty("windowHeight", String.valueOf(getHeight()));
+        if(windowDimensionSave)
+        {
+            config.setProperty("windowWidth", String.valueOf(getWidth()));
+            config.setProperty("windowHeight", String.valueOf(getHeight()));
+        }
 
         if(logCurrentlyVisible) config.setProperty("logVisibility", "true");
         if(!logCurrentlyVisible) config.setProperty("logVisibility", "false");
@@ -571,10 +577,29 @@ public class DownloadGUI extends JFrame
             openWhenDone = Boolean.parseBoolean(stringOpenWhenDone);
         }
 
+        // Pop up notifaction window when done download
         String stringPopUp = config.getProperty("popUp", "true");
         if(stringPopUp != null)
         {
             popUp = Boolean.parseBoolean(stringPopUp);
+        }
+
+        // Save the dimensions of the window 
+        String stringWindowDimensionSave = config.getProperty("windowDimensionSave", "true");
+        if(stringWindowDimensionSave != null)
+        {
+            windowDimensionSave = Boolean.parseBoolean(stringWindowDimensionSave);
+        }
+
+        // Window Dimesnions
+        if(windowDimensionSave)
+        {
+            windowWidth = Integer.parseInt(ConfigManager.getInstance().getProperty("windowWidth", "900"));
+            windowHeight = Integer.parseInt(ConfigManager.getInstance().getProperty("windowHeight", "550"));
+        }
+        else
+        {
+            windowHeight = 550; windowWidth = 900;
         }
 
         constructCommand();
