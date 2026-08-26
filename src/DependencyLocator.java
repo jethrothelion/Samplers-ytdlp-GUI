@@ -59,7 +59,7 @@ public class DependencyLocator
         }
     }
 
-    public String getYtdlpPath() 
+    public synchronized String getYtdlpPath() 
     {
         //returns imediately if already been found
         if (cachedYtdlpPath != null) {
@@ -103,7 +103,7 @@ public class DependencyLocator
         return cachedYtdlpPath; 
     }
 
-    public String getFFmpegPath() 
+    public synchronized String getFFmpegPath() 
     {
         // Return immediately if we already found it before
         if (cachedFfmpegPath != null) {
