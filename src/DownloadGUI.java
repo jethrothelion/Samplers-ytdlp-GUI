@@ -53,6 +53,7 @@ public class DownloadGUI extends JFrame
     boolean autoStart = false;
     boolean openWhenDone = false;
     boolean popUp = true;
+    boolean windowDimensionSave = true;
 
     public void initialization()
         {
@@ -517,8 +518,11 @@ public class DownloadGUI extends JFrame
         config.setProperty("type", type);
 
         // Window Size
-        config.setProperty("windowWidth", String.valueOf(getWidth()));
-        config.setProperty("windowHeight", String.valueOf(getHeight()));
+        if(windowDimensionSave)
+        {
+            config.setProperty("windowWidth", String.valueOf(getWidth()));
+            config.setProperty("windowHeight", String.valueOf(getHeight()));
+        }
 
         if(logCurrentlyVisible) config.setProperty("logVisibility", "true");
         if(!logCurrentlyVisible) config.setProperty("logVisibility", "false");
@@ -571,6 +575,12 @@ public class DownloadGUI extends JFrame
         if(stringPopUp != null)
         {
             popUp = Boolean.parseBoolean(stringPopUp);
+        }
+
+        String stringWindowDimensionSave = config.getProperty("windowDimensionSave", "true");
+        if(stringWindowDimensionSave != null)
+        {
+            windowDimensionSave = Boolean.parseBoolean(stringWindowDimensionSave);
         }
 
         constructCommand();

@@ -241,7 +241,7 @@ public class SettingsWindow extends JDialog
         gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 1.0;
         panel.add(popUpCheckBox, gbc);
 
-        windowDimensionSaveCheckBox = new JCheckBox("When done download have a pop up notifaction");
+        windowDimensionSaveCheckBox = new JCheckBox("Save the Dimension of the window when you clsoe the app");
         windowDimensionSaveCheckBox.setFocusPainted(false);
 
         gbc.gridx = 0; gbc.gridy = 3; gbc.weightx = 1.0;
