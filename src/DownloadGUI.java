@@ -233,8 +233,9 @@ public class DownloadGUI extends JFrame
                         System.out.println("No folder selected");
                     }
                 } catch (Exception ex) {
-                    System.err.println("Failed to swap Style, Look and Feel for file chooser.");
-                    logArea.append("Failed to swap Style, Look and Feel for file chooser.");
+                    String message = "Failed to swap Style, Look and Feel for file chooser.";
+                    System.err.println(message);
+                    logArea.append(message);
                     ex.printStackTrace();
                 }
                 constructCommand();
