@@ -260,7 +260,16 @@ public class SettingsWindow extends JDialog
             @Override
             protected Void doInBackground() throws Exception 
             {
-                downloader.Download(ytdlpPathField.getText() + " -U", outputListener, false, false);
+                String cmd = ytdlpPathField.getText() + " -U";
+                
+                if(System.getProperty("os.name").toLowerCase().contains("window"))
+                {
+                    cmd = "powershell.exe -NoProfile -Command \"$p = Start-Process cmd "
+                        + "-ArgumentList '/c \\\"" + ytdlpPathField.getText() + "\\\" -U' "
+                        + "-Verb RunAs -Wait -PassThru; exit $p.ExitCode\"";
+                }
+
+                downloader.Download(cmd, outputListener, false, false);
                 return null;
             }
         };
