@@ -796,6 +796,8 @@ public class DownloadGUI extends JFrame
             command.add("\"" + fileName.toString() + "\"");
         }
         
+        command.add("--embed-thumbnail --embed-metadata");
+        
         commandBar.setText(String.join(" ", command).trim());  
     }
     
