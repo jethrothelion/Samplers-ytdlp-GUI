@@ -299,6 +299,7 @@ public class SettingsWindow extends JDialog
         config.setProperty("directory", defaultDirField.getText());
         config.setProperty("ytdlpPath", ytdlpPathField.getText());
         config.setProperty("ffmpegPath", ffmpegPathField.getText());
+        config.setProperty("customFlags", customFlagsField.getText());
 
         // Appearance & Behavior
         config.setProperty("theme", themeDropdown.getSelectedItem().toString());
@@ -321,6 +322,7 @@ public class SettingsWindow extends JDialog
         defaultDirField.setText(config.getProperty("directory", ""));
         ytdlpPathField.setText(config.getProperty("ytdlpPath", "yt-dlp"));
         ffmpegPathField.setText(config.getProperty("ffmpegPath", "ffmpeg"));
+        customFlagsField.setText(config.getProperty("customFlags", ""));
 
         // Appearance
         themeDropdown.setSelectedItem(config.getProperty("theme", "Light"));
