@@ -16,6 +16,7 @@ public class SettingsWindow extends JDialog
     private JTextField defaultDirField;
     private JTextField ytdlpPathField;
     private JTextField ffmpegPathField;
+    private JTextField customFlagsField;
     private JButton browseDirBtn;
     private JButton updateYTDLP;
 
@@ -181,8 +182,19 @@ public class SettingsWindow extends JDialog
         gbc.gridx = 1; gbc.gridwidth = 2; gbc.weightx = 1.0;
         panel.add(ffmpegPathField, gbc);
 
+        // --- Custom Flags ---
+        JLabel customFlags = new JLabel("Custom Flags:");
+        customFlagsField = new JTextField();
+        customFlagsField.setBorder(new LineBorder(Color.BLACK, 2));
+
+        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 1; gbc.weightx = 0;
+        panel.add(customFlags, gbc);
+        gbc.gridx = 1; gbc.gridwidth = 2; gbc.weightx = 1.0;
+        panel.add(customFlagsField, gbc);
+
+
         // Blank space at bottom to push everything up
-        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 3; gbc.weighty = 1.0;
+        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 3; gbc.weighty = 1.0;
         panel.add(new JLabel(""), gbc);
 
         return panel;
@@ -287,6 +299,7 @@ public class SettingsWindow extends JDialog
         config.setProperty("directory", defaultDirField.getText());
         config.setProperty("ytdlpPath", ytdlpPathField.getText());
         config.setProperty("ffmpegPath", ffmpegPathField.getText());
+        config.setProperty("customFlags", customFlagsField.getText());
 
         // Appearance & Behavior
         config.setProperty("theme", themeDropdown.getSelectedItem().toString());
@@ -309,6 +322,7 @@ public class SettingsWindow extends JDialog
         defaultDirField.setText(config.getProperty("directory", ""));
         ytdlpPathField.setText(config.getProperty("ytdlpPath", "yt-dlp"));
         ffmpegPathField.setText(config.getProperty("ffmpegPath", "ffmpeg"));
+        customFlagsField.setText(config.getProperty("customFlags", ""));
 
         // Appearance
         themeDropdown.setSelectedItem(config.getProperty("theme", "Light"));

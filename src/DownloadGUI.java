@@ -61,6 +61,7 @@ public class DownloadGUI extends JFrame
     boolean openWhenDone = false;
     boolean popUp = true;
     boolean windowDimensionSave = true;
+    String customFlags;
 
     public void initialization()
         {
@@ -603,6 +604,9 @@ public class DownloadGUI extends JFrame
             windowHeight = 550; windowWidth = 900;
         }
 
+        // Extra user specified flags and argumants to be added to command
+        customFlags = config.getProperty("customFlags", null);
+
         constructCommand();
     }
 
@@ -797,7 +801,10 @@ public class DownloadGUI extends JFrame
         }
         
         command.add("--embed-thumbnail --embed-metadata");
-        
+
+        if (customFlags != null && !customFlags.trim().isEmpty())
+        { command.add(customFlags); }        
+
         commandBar.setText(String.join(" ", command).trim());  
     }
     
