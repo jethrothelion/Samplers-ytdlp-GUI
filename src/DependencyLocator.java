@@ -11,10 +11,31 @@ public class DependencyLocator
 // has getDependancyPath(base command, --specific version flag) for every dependancy nessicary,
 // methods returns path to dependancy or a image object in the case of icons
 {
+    // shared instance of this class, so every window resolves to the same executables
+    private static DependencyLocator instance;
+
     private String cachedYtdlpPath = null;
     private String cachedFfmpegPath = null;
 
     private File cachedJarDir = null;
+
+    private DependencyLocator() { }
+
+    // get shared instance
+    public static DependencyLocator getInstance()
+    {
+        if (instance == null) {
+            instance = new DependencyLocator();
+        }
+        return instance;
+    }
+
+    // Forgets the remembered paths so the next lookup picks up changed settings
+    public synchronized void clearCache()
+    {
+        cachedYtdlpPath = null;
+        cachedFfmpegPath = null;
+    }
 
     private File getJarDirectory()
     {
@@ -68,15 +89,23 @@ public class DependencyLocator
 
         String os = System.getProperty("os.name").toLowerCase();
         String executableName = os.contains("windows") ? "yt-dlp.exe" : "yt-dlp";
-        
-        // 1. Try PATH First
+
+        // 1. Use the path from the settings window, if the user set one that works
+        String configuredPath = ConfigManager.getInstance().getProperty("ytdlpPath", "").trim();
+        if (!configuredPath.isEmpty() && checkProcessSilently(configuredPath, "--version")) {
+            System.out.println("yt-dlp found at the path set in settings.");
+            cachedYtdlpPath = configuredPath;
+            return cachedYtdlpPath;
+        }
+
+        // 2. Try PATH
         if (checkProcessSilently(executableName, "--version")) {
             System.out.println("yt-dlp found in system PATH.");
             cachedYtdlpPath = executableName;
             return cachedYtdlpPath;
         }
 
-        // 2. Try Folder if not found in PATH
+        // 3. Try Folder if not found in PATH
         File jarDir = getJarDirectory();
         if (jarDir != null)
         {
@@ -113,14 +142,22 @@ public class DependencyLocator
         String os = System.getProperty("os.name").toLowerCase();
         String executableName = os.contains("windows") ? "ffmpeg.exe" : "ffmpeg";
 
-        // 1. Try PATH First 
+        // 1. Use the path from the settings window, if the user set one that works
+        String configuredPath = ConfigManager.getInstance().getProperty("ffmpegPath", "").trim();
+        if (!configuredPath.isEmpty() && checkProcessSilently(configuredPath, "-version")) {
+            System.out.println("ffmpeg found at the path set in settings.");
+            cachedFfmpegPath = configuredPath;
+            return cachedFfmpegPath;
+        }
+
+        // 2. Try PATH
         if (checkProcessSilently(executableName, "-version")) {
             System.out.println("ffmpeg found in system PATH.");
             cachedFfmpegPath = executableName;
             return cachedFfmpegPath;
         }
 
-        // 2. Try Folder if not found in PATH
+        // 3. Try Folder if not found in PATH
         File jarDir = getJarDirectory();
         if (jarDir != null)
         {

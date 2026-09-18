@@ -3,6 +3,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -34,6 +36,7 @@ public class SettingsWindow extends JDialog
 
     String configPath = System.getProperty("user.home") + File.separator + "YoutubeDownloaderConfig.properties";
     DownloadManager downloader = new DownloadManager();
+    DependencyLocator locator = DependencyLocator.getInstance();
     private DownloadListener outputListener;
 
     public void initialization()
@@ -161,7 +164,7 @@ public class SettingsWindow extends JDialog
         ytdlpPathField.setBorder(new LineBorder(Color.BLACK, 2));
         ytdlpPathField.setToolTipText("Full path to the yt-dlp executable. Leave as yt-dlp to use your system PATH.");
         
-        JButton updateYTDLP = new JButton("Update yt-dlp");
+        updateYTDLP = new JButton("Update yt-dlp");
         updateYTDLP.setBorder(new LineBorder(Color.BLACK, 2));
         updateYTDLP.setBackground(Color.WHITE);
         
@@ -304,24 +307,87 @@ public class SettingsWindow extends JDialog
 
     private void updateYTDLP()
     {
-        SwingWorker<Void, Integer> downloadWorker = new SwingWorker<Void, Integer>() {
-            @Override
-            protected Void doInBackground() throws Exception 
-            {
-                String cmd = ytdlpPathField.getText() + " -U";
-                
-                if(System.getProperty("os.name").toLowerCase().contains("window"))
-                {
-                    cmd = "powershell.exe -NoProfile -Command \"$p = Start-Process cmd "
-                        + "-ArgumentList '/c \\\"" + ytdlpPathField.getText() + "\\\" -U' "
-                        + "-Verb RunAs -Wait -PassThru; exit $p.ExitCode\"";
-                }
+        // Stop the button being spammed while an update is already running
+        updateYTDLP.setEnabled(false);
+        updateYTDLP.setText("Updating...");
 
-                downloader.Download(cmd, outputListener, false, false);
-                return null;
+        SwingWorker<Boolean, Void> updateWorker = new SwingWorker<Boolean, Void>() {
+            private final StringBuilder updateLog = new StringBuilder();
+            private boolean succeeded = false;
+
+            @Override
+            protected Boolean doInBackground() throws Exception
+            {
+                // Built as a list so nothing has to be quoted, a path with spaces in it
+                // used to get chopped back apart into seperate arguments
+                List<String> command = new ArrayList<>();
+                command.add(locator.getYtdlpPath()); // Same executable the downloads use
+                command.add("-U");
+
+                // Our own listener, the main window log sits behind this dialog and
+                // may be hidden completely so nothing ever looked like it happened
+                DownloadListener updateListener = new DownloadListener() {
+                    @Override
+                    public void onOutput(String output)
+                    {
+                        updateLog.append(output).append("\n");
+                        if (outputListener != null) { outputListener.onOutput(output); }
+                    }
+
+                    @Override
+                    public void onComplete(boolean success) { succeeded = success; }
+                };
+
+                downloader.Download(command, updateListener, false, false);
+                return succeeded;
+            }
+
+            @Override
+            protected void done()
+            {
+                updateYTDLP.setEnabled(true);
+                updateYTDLP.setText("Update yt-dlp");
+
+                try {
+                    if (get()) {
+                        JOptionPane.showMessageDialog(SettingsWindow.this, "yt-dlp is up to date!");
+                    } else {
+                        JOptionPane.showMessageDialog(SettingsWindow.this, buildFailureMessage(updateLog.toString()),
+                            "Update Failed", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(SettingsWindow.this, "Update failed: " + e.getMessage(),
+                        "Update Failed", JOptionPane.ERROR_MESSAGE);
+                    e.printStackTrace();
+                }
             }
         };
-        downloadWorker.execute();
+        updateWorker.execute();
+    }
+
+    // Turns the captured yt-dlp output into something that explains what to do about it
+    private String buildFailureMessage(String updateLog)
+    {
+        String lowerLog = updateLog.toLowerCase();
+
+        if (lowerLog.contains("permission denied") || lowerLog.contains("access is denied"))
+        {
+            if (System.getProperty("os.name").toLowerCase().contains("window")) {
+                return "Could not update yt-dlp, it does not have permission to write to itself.\n"
+                     + "Close this and run the app as administrator, then try again.";
+            }
+            return "Could not update yt-dlp, it does not have permission to write to itself.\n"
+                 + "Run 'sudo " + locator.getYtdlpPath() + " -U' in a terminal instead.";
+        }
+
+        // yt-dlp refuses -U when a package manager owns the install
+        if (lowerLog.contains("not a valid executable") || lowerLog.contains("package manager"))
+        {
+            return "This copy of yt-dlp was installed by a package manager, so it cannot update itself.\n"
+                 + "Update it the same way you installed it (pip, apt, brew, and so on).";
+        }
+
+        return "Could not update yt-dlp. Check the console for details.";
     }
 
     // ==========================================================
@@ -330,6 +396,11 @@ public class SettingsWindow extends JDialog
     public void saveConfig()
     {
         ConfigManager config = ConfigManager.getInstance();
+
+        // Checked before the new values overwrite them, so the locator is only sent
+        // looking again when a path actually changed instead of on every single save
+        boolean pathsChanged = !ytdlpPathField.getText().equals(config.getProperty("ytdlpPath", ""))
+                            || !ffmpegPathField.getText().equals(config.getProperty("ffmpegPath", ""));
 
         // Paths
         config.setProperty("directory", defaultDirField.getText());
@@ -346,7 +417,10 @@ public class SettingsWindow extends JDialog
         config.setProperty("windowDimensionSave", String.valueOf(windowDimensionSaveCheckBox.isSelected()));
 
         config.save(); // Writes everything to the file once
-        
+
+        // Make the locator forget what it found so the new paths take effect right away
+        if (pathsChanged) { locator.clearCache(); }
+
         JOptionPane.showMessageDialog(this, "Settings Saved Successfully!");
         dispose(); 
     }
@@ -357,8 +431,10 @@ public class SettingsWindow extends JDialog
 
         // Paths
         defaultDirField.setText(config.getProperty("directory", ""));
-        ytdlpPathField.setText(config.getProperty("ytdlpPath", "yt-dlp"));
-        ffmpegPathField.setText(config.getProperty("ffmpegPath", "ffmpeg"));
+        // Show what actually got resolved, not just what was typed, the locator already
+        // prefers the saved path so these only differ when the saved one did not work
+        ytdlpPathField.setText(locator.getYtdlpPath());
+        ffmpegPathField.setText(locator.getFFmpegPath());
         customFlagsField.setText(config.getProperty("customFlags", ""));
         cookiesFileField.setText(config.getProperty("cookiesFile", ""));
 
