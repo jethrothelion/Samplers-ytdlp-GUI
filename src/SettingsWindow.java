@@ -159,6 +159,7 @@ public class SettingsWindow extends JDialog
         JLabel ytdlpLabel = new JLabel("YT-DLP Path:");
         ytdlpPathField = new JTextField();
         ytdlpPathField.setBorder(new LineBorder(Color.BLACK, 2));
+        ytdlpPathField.setToolTipText("Full path to the yt-dlp executable. Leave as yt-dlp to use your system PATH.");
         
         JButton updateYTDLP = new JButton("Update yt-dlp");
         updateYTDLP.setBorder(new LineBorder(Color.BLACK, 2));
@@ -178,6 +179,7 @@ public class SettingsWindow extends JDialog
         JLabel ffmpegLabel = new JLabel("FFmpeg Path:");
         ffmpegPathField = new JTextField();
         ffmpegPathField.setBorder(new LineBorder(Color.BLACK, 2));
+        ffmpegPathField.setToolTipText("Full path to the ffmpeg executable. Leave as ffmpeg to use your system PATH.");
 
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 1; gbc.weightx = 0;
         panel.add(ffmpegLabel, gbc);
@@ -188,6 +190,7 @@ public class SettingsWindow extends JDialog
         JLabel customFlags = new JLabel("Custom Flags:");
         customFlagsField = new JTextField();
         customFlagsField.setBorder(new LineBorder(Color.BLACK, 2));
+        customFlagsField.setToolTipText("Extra yt-dlp flags added to the end of every command.");
 
         gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 1; gbc.weightx = 0;
         panel.add(customFlags, gbc);
@@ -200,6 +203,7 @@ public class SettingsWindow extends JDialog
         browseCookiesBtn = new JButton("Browse");
 
         cookiesFileField.setBorder(new LineBorder(Color.BLACK, 2));
+        cookiesFileField.setToolTipText("Path to a cookies.txt file, for age restricted or members only videos. Can also name browser, chrome, safari or others");
         browseCookiesBtn.setBorder(new LineBorder(Color.BLACK, 2));
         browseCookiesBtn.setBackground(Color.WHITE);
 
@@ -286,6 +290,7 @@ public class SettingsWindow extends JDialog
 
         windowDimensionSaveCheckBox = new JCheckBox("Save the Dimension of the window when you close the app");
         windowDimensionSaveCheckBox.setFocusPainted(false);
+        windowDimensionSaveCheckBox.setToolTipText("Remembers the window size and reopens the app at that size.");
 
         gbc.gridx = 0; gbc.gridy = 3; gbc.weightx = 1.0;
         panel.add(windowDimensionSaveCheckBox, gbc);
