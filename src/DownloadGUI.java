@@ -62,6 +62,7 @@ public class DownloadGUI extends JFrame
     boolean popUp = true;
     boolean windowDimensionSave = true;
     String customFlags;
+    String cookiesFile;
 
     public void initialization()
         {
@@ -607,6 +608,9 @@ public class DownloadGUI extends JFrame
         // Extra user specified flags and argumants to be added to command
         customFlags = config.getProperty("customFlags", null);
 
+        // Cookies file used for age restricted / members only videos
+        cookiesFile = config.getProperty("cookiesFile", null);
+
         constructCommand();
     }
 
@@ -684,7 +688,20 @@ public class DownloadGUI extends JFrame
             protected Integer doInBackground() throws Exception 
             {
                 try {
-                    ProcessBuilder pb = new ProcessBuilder(locator.getYtdlpPath(), url, "--print", "%(duration)s");
+                    List<String> args = new ArrayList<>();
+                    args.add(locator.getYtdlpPath());
+                    args.add(url);
+                    args.add("--print");
+                    args.add("%(duration)s");
+
+                    // Needed or the duration fetch fails on age restricted / members only videos
+                    if (cookiesFile != null && !cookiesFile.trim().isEmpty())
+                    {
+                        args.add("--cookies");
+                        args.add(cookiesFile.trim());
+                    }
+
+                    ProcessBuilder pb = new ProcessBuilder(args);
                     Process process = pb.start();
                     BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()));
                     BufferedReader stderr = new BufferedReader(new InputStreamReader(process.getErrorStream()));
@@ -802,8 +819,14 @@ public class DownloadGUI extends JFrame
         
         command.add("--embed-thumbnail --embed-metadata");
 
+        if (cookiesFile != null && !cookiesFile.trim().isEmpty())
+        {
+            command.add("--cookies");
+            command.add("\"" + cookiesFile.trim() + "\"");
+        }
+
         if (customFlags != null && !customFlags.trim().isEmpty())
-        { command.add(customFlags); }        
+        { command.add(customFlags); }
 
         commandBar.setText(String.join(" ", command).trim());  
     }

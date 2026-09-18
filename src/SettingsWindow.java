@@ -17,7 +17,9 @@ public class SettingsWindow extends JDialog
     private JTextField ytdlpPathField;
     private JTextField ffmpegPathField;
     private JTextField customFlagsField;
+    private JTextField cookiesFileField;
     private JButton browseDirBtn;
+    private JButton browseCookiesBtn;
     private JButton updateYTDLP;
 
     private JComboBox<String> themeDropdown;
@@ -192,9 +194,38 @@ public class SettingsWindow extends JDialog
         gbc.gridx = 1; gbc.gridwidth = 2; gbc.weightx = 1.0;
         panel.add(customFlagsField, gbc);
 
+        // --- Cookies File ---
+        JLabel cookiesFile = new JLabel("Cookies File:");
+        cookiesFileField = new JTextField();
+        browseCookiesBtn = new JButton("Browse");
+
+        cookiesFileField.setBorder(new LineBorder(Color.BLACK, 2));
+        browseCookiesBtn.setBorder(new LineBorder(Color.BLACK, 2));
+        browseCookiesBtn.setBackground(Color.WHITE);
+
+        browseCookiesBtn.addActionListener(e -> {
+            try {
+                LookAndFeel previousLF = UIManager.getLookAndFeel();
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                JFileChooser chooser = new JFileChooser();
+                chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                    cookiesFileField.setText(chooser.getSelectedFile().getAbsolutePath());
+                }
+                UIManager.setLookAndFeel(previousLF);
+            } catch (Exception ex) { ex.printStackTrace(); }
+        });
+
+        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 1; gbc.weightx = 0;
+        panel.add(cookiesFile, gbc);
+        gbc.gridx = 1; gbc.gridwidth = 1; gbc.weightx = 1.0;
+        panel.add(cookiesFileField, gbc);
+        gbc.gridx = 2; gbc.gridwidth = 1; gbc.weightx = 0;
+        panel.add(browseCookiesBtn, gbc);
+
 
         // Blank space at bottom to push everything up
-        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 3; gbc.weighty = 1.0;
+        gbc.gridx = 0; gbc.gridy = 5; gbc.gridwidth = 3; gbc.weighty = 1.0;
         panel.add(new JLabel(""), gbc);
 
         return panel;
@@ -300,6 +331,7 @@ public class SettingsWindow extends JDialog
         config.setProperty("ytdlpPath", ytdlpPathField.getText());
         config.setProperty("ffmpegPath", ffmpegPathField.getText());
         config.setProperty("customFlags", customFlagsField.getText());
+        config.setProperty("cookiesFile", cookiesFileField.getText());
 
         // Appearance & Behavior
         config.setProperty("theme", themeDropdown.getSelectedItem().toString());
@@ -323,6 +355,7 @@ public class SettingsWindow extends JDialog
         ytdlpPathField.setText(config.getProperty("ytdlpPath", "yt-dlp"));
         ffmpegPathField.setText(config.getProperty("ffmpegPath", "ffmpeg"));
         customFlagsField.setText(config.getProperty("customFlags", ""));
+        cookiesFileField.setText(config.getProperty("cookiesFile", ""));
 
         // Appearance
         themeDropdown.setSelectedItem(config.getProperty("theme", "Light"));
