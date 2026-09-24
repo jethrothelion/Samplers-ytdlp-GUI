@@ -48,7 +48,7 @@ public class DownloadGUI extends JFrame
     private int videoDuration = -1; // Duration in seconds, -1 means unknown
     private boolean hasVerifiedExecutables = false; // Flag to prevent duplicate checks
 
-    private DependencyLocator locator = new DependencyLocator();
+    private DependencyLocator locator = DependencyLocator.getInstance();
     private DownloadManager downloader;
     
     // prevent spamming yt-dlp processes
