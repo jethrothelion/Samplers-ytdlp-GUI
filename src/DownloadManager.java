@@ -23,6 +23,21 @@ public class DownloadManager
             }
         }
         
+        Download(command, listener, findPrecent, findObjective);
+    }
+
+    // Takes the arguments already split up, for commands that would get mangled by
+    // quoting them into a string just to chop them back apart again
+    public void Download(List<String> command, DownloadListener listener, Boolean findPrecent, boolean findObjective)
+    {
+        if (command.isEmpty()) {
+            if (listener != null) {
+                listener.onOutput("Nothing to run, the command was empty.");
+                listener.onComplete(false);
+            }
+            return;
+        }
+
         // Debugging print to prove the string was chopped up correctly
         if (listener != null) {
             listener.onOutput("Parsed Executable: " + command.get(0));
@@ -55,9 +70,9 @@ public class DownloadManager
             BufferedReader stdout = new BufferedReader(new InputStreamReader(activeProcess.getInputStream()));
             String outputLine;
             while ((outputLine = stdout.readLine()) != null) {
-                listener.onOutput(outputLine);
-
                 if (listener != null) {
+                    listener.onOutput(outputLine);
+
                     if(findPrecent)
                     {
                         int precent = calculateProgress(outputLine);
@@ -86,6 +101,11 @@ public class DownloadManager
                 }
             }
         } catch (Exception e) {
+            // Without this a failure to even start the process finishes silently
+            if (listener != null) {
+                listener.onOutput("Could not run " + command.get(0) + ": " + e.getMessage());
+                listener.onComplete(false);
+            }
             e.printStackTrace();
         }
     }
