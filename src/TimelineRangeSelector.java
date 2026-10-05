@@ -26,9 +26,18 @@ public class TimelineRangeSelector extends JPanel
     // Remembers where inside the box the user clicked to prevent cursor snapping
     private int dragOffset = 0;
 
+    // The portion of the video (0 to 100 percent) currently shown on the track, shrinks when zoomed
+    private double viewStart = 0.0;
+    private double viewEnd = 100.0;
+
+    // Holding a box still for 1 second zooms in, holdAnchorX is where the box was last held still
+    private final Timer holdTimer = new Timer(1000, e -> zoomIn());
+    private int holdAnchorX = 0;
+
     public TimelineRangeSelector() {
         setPreferredSize(new Dimension(500, 60));
-        
+        holdTimer.setRepeats(false);
+
         MouseAdapter mouseHandler = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -43,32 +52,46 @@ public class TimelineRangeSelector extends JPanel
                     activeBox = 2;
                     dragOffset = mouseX - rX;
                 }
+
+                if (activeBox != 0)
+                {
+                    holdAnchorX = mouseX;
+                    holdTimer.restart();
+                }
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                activeBox = 0; 
+                activeBox = 0;
+                holdTimer.stop();
+                viewStart = 0.0;
+                viewEnd = 100.0;
+                repaint();
             }
 
             @Override
             public void mouseDragged(MouseEvent e) {
-                if (activeBox == 0) return; 
+                if (activeBox == 0) return;
+
+                // Moving more than a few pixels counts as not holding still, so restart the zoom countdown
+                if (Math.abs(e.getX() - holdAnchorX) > 3)
+                {
+                    holdAnchorX = e.getX();
+                    holdTimer.restart();
+                }
 
                 int trackW = getWidth() - (2 * endBarWidth) - (2 * boxWidth);
                 if (trackW <= 0) return;
 
                 int targetPixel = e.getX() - dragOffset;
-                
+
+                // Clamp in percent space since the other box may be off screen while zoomed
                 if (activeBox == 1) {
-                    int minPixel = endBarWidth;
-                    int maxPixel = getRightBoxX() - boxWidth;
-                    int boundedPixel = Math.max(minPixel, Math.min(targetPixel, maxPixel));
-                    leftPercent = ((boundedPixel - endBarWidth) / (double) trackW) * 100.0;
+                    double fraction = Math.max(0.0, Math.min(1.0, (targetPixel - endBarWidth) / (double) trackW));
+                    leftPercent = Math.min(viewStart + fraction * (viewEnd - viewStart), rightPercent);
                 } else if (activeBox == 2) {
-                    int minPixel = getLeftBoxX() + boxWidth;
-                    int maxPixel = getWidth() - endBarWidth - boxWidth;
-                    int boundedPixel = Math.max(minPixel, Math.min(targetPixel, maxPixel));
-                    rightPercent = ((boundedPixel - endBarWidth - boxWidth) / (double) trackW) * 100.0;
+                    double fraction = Math.max(0.0, Math.min(1.0, (targetPixel - endBarWidth - boxWidth) / (double) trackW));
+                    rightPercent = Math.max(viewStart + fraction * (viewEnd - viewStart), leftPercent);
                 }
                 
                 repaint(); 
@@ -109,13 +132,49 @@ public class TimelineRangeSelector extends JPanel
     private int getLeftBoxX() {
         int trackW = getWidth() - (2 * endBarWidth) - (2 * boxWidth);
         if (trackW <= 0) return endBarWidth;
-        return endBarWidth + (int) ((leftPercent / 100) * trackW);
+        return endBarWidth + (int) (((leftPercent - viewStart) / (viewEnd - viewStart)) * trackW);
     }
 
     private int getRightBoxX() {
         int trackW = getWidth() - (2 * endBarWidth) - (2 * boxWidth);
         if (trackW <= 0) return endBarWidth + boxWidth;
-        return endBarWidth + (int) ((rightPercent / 100) * trackW) + boxWidth;
+        return endBarWidth + (int) (((rightPercent - viewStart) / (viewEnd - viewStart)) * trackW) + boxWidth;
+    }
+
+    private boolean isInView(double percent)
+    {
+        return percent >= viewStart && percent <= viewEnd;
+    }
+
+    // Zooms the track in 10x while keeping the held box under the cursor
+    private void zoomIn()
+    {
+        if (activeBox == 0) return;
+
+        double span = viewEnd - viewStart;
+
+        // Stop zooming once about 10 seconds of video are showing
+        double minSpan = 0.5; // fallback when no url/duration
+        if (videoDuration > 0)
+        {
+            minSpan = (10.0 / videoDuration) * 100.0;
+        }
+
+        double newSpan = Math.max(span / 10.0, minSpan);
+        if (newSpan >= span) return; // Already zoomed in as far as allowed
+
+        double heldPercent = leftPercent;
+        if (activeBox == 2)
+        {
+            heldPercent = rightPercent;
+        }
+        double fraction = (heldPercent - viewStart) / span;
+
+        viewStart = heldPercent - fraction * newSpan;
+        viewStart = Math.max(0.0, Math.min(viewStart, 100.0 - newSpan));
+        viewEnd = viewStart + newSpan;
+
+        repaint();
     }
 
     private String formatTime(double percent)
@@ -162,31 +221,54 @@ public class TimelineRangeSelector extends JPanel
         int trackHeight = 10;
         int trackY = (getHeight() - trackHeight) / 2;
 
-        // 1. Draw the static grey bars at the extreme edges
+        // Draw the static grey bars at the extreme edges
         g2d.setColor(Color.GRAY);
         g2d.fillRect(0, endBarY, endBarWidth, endBarHeight);
         g2d.fillRect(getWidth() - endBarWidth, endBarY, endBarWidth, endBarHeight);
 
-        // 2. Draw the background timeline track (Light Gray) offset by endBarWidth
-        g2d.setColor(Color.LIGHT_GRAY);
+        boolean zoomed = (viewEnd - viewStart) < 100.0;
+        boolean leftVisible = isInView(leftPercent);
+        boolean rightVisible = isInView(rightPercent);
+
+        // Draw the background timeline track (Light Gray, Light Red when zoomed) offset by endBarWidth
+        if (zoomed)
+        {
+            g2d.setColor(new Color(255, 180, 180));
+        }
+        else
+        {
+            g2d.setColor(Color.LIGHT_GRAY);
+        }
         g2d.fillRect(endBarWidth, trackY, getWidth() - (2 * endBarWidth), trackHeight);
 
-        // 3. Draw the highlighted "selected" range between the two boxes (Blue)
+        // Draw the highlighted "selected" range between the two boxes (Blue), clipped to the visible track
         g2d.setColor(new Color(100, 150, 255));
-        int selectionStartX = lX + boxWidth;
-        int selectionWidth = rX - selectionStartX;
-        g2d.fillRect(selectionStartX, trackY, selectionWidth, trackHeight);
+        int selectionStartX = Math.max(lX + boxWidth, endBarWidth);
+        int selectionEndX = Math.min(rX, getWidth() - endBarWidth);
+        if (selectionEndX > selectionStartX)
+        {
+            g2d.fillRect(selectionStartX, trackY, selectionEndX - selectionStartX, trackHeight);
+        }
 
-        // 4. Draw the two draggable boxes (Dark Gray)
+        // Draw the two draggable boxes (Dark Gray), skipping any zoomed out of view
         g2d.setColor(Color.DARK_GRAY);
-        g2d.fillRect(lX, centerY, boxWidth, boxHeight);
-        g2d.fillRect(rX, centerY, boxWidth, boxHeight);
+        if (leftVisible) g2d.fillRect(lX, centerY, boxWidth, boxHeight);
+        if (rightVisible) g2d.fillRect(rX, centerY, boxWidth, boxHeight);
 
-        // 5. Draw the dynamic text above each box
+        // Draw the dynamic text above each box
         g2d.setColor(Color.BLACK);
         g2d.setFont(new Font("Arial", Font.BOLD, 11));
         FontMetrics fm = g2d.getFontMetrics();
-        
+
+        // While zoomed, show the start and end time of the visible slice under the track ends
+        if (zoomed)
+        {
+            String viewEndText = formatTime(viewEnd);
+            int viewLabelY = getHeight() - 2;
+            g2d.drawString(formatTime(viewStart), 0, viewLabelY);
+            g2d.drawString(viewEndText, getWidth() - fm.stringWidth(viewEndText), viewLabelY);
+        }
+
         String leftText = formatTime(leftPercent);
         String rightText = formatTime(rightPercent);
         
@@ -208,8 +290,8 @@ public class TimelineRangeSelector extends JPanel
             rightTextY = centerY + boxHeight + fm.getAscent() + 2; 
         }
 
-        g2d.drawString(leftText, leftTextX, leftTextY);
-        g2d.drawString(rightText, rightTextX, rightTextY);
+        if (leftVisible) g2d.drawString(leftText, leftTextX, leftTextY);
+        if (rightVisible) g2d.drawString(rightText, rightTextX, rightTextY);
     }
     
     public void setVideoDuration(double duration)
