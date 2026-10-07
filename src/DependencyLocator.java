@@ -184,6 +184,18 @@ public class DependencyLocator
         return cachedFfmpegPath; 
     }
 
+    // Returns themes folder next to the jar, falls back to the working directory
+    public File getThemesFolder()
+    {
+        File jarDir = getJarDirectory();
+        if (jarDir != null)
+        {
+            File themesFolder = new File(jarDir, "themes");
+            if (themesFolder.exists()) return themesFolder;
+        }
+        return new File("themes");
+    }
+
     //Takes path to icon returns Icon object
     public Icon getIcon(String name)
     {

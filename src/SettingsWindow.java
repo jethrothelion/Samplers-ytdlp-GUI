@@ -37,6 +37,7 @@ public class SettingsWindow extends JDialog
     String configPath = System.getProperty("user.home") + File.separator + "YoutubeDownloaderConfig.properties";
     DownloadManager downloader = new DownloadManager();
     DependencyLocator locator = DependencyLocator.getInstance();
+    ThemeManager theme = ThemeManager.getInstance();
     private DownloadListener outputListener;
 
     public void initialization()
@@ -51,7 +52,7 @@ public class SettingsWindow extends JDialog
         JPanel sidebarPanel = new JPanel();
         sidebarPanel.setLayout(new BoxLayout(sidebarPanel, BoxLayout.Y_AXIS));
         sidebarPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        sidebarPanel.setBackground(new Color(230, 230, 230));
+        sidebarPanel.setBackground(theme.getColor("sidebarBackground"));
 
         JButton pathsBtn = createCategoryButton("Paths");
         JButton appearanceBtn = createCategoryButton("Appearance");
@@ -83,13 +84,13 @@ public class SettingsWindow extends JDialog
         saveBtn = new JButton("SAVE");
         closeBtn = new JButton("CLOSE");
 
-        saveBtn.setBackground(Color.GREEN);
-        saveBtn.setBorder(new LineBorder(new Color(0, 153, 51), 3));
+        saveBtn.setBackground(theme.getColor("successBackground"));
+        saveBtn.setBorder(new LineBorder(theme.getColor("successBorder"), 3));
         saveBtn.addActionListener(e -> saveConfig());
 
-        closeBtn.setBackground(new Color(200, 0, 0));
-        closeBtn.setForeground(Color.WHITE);
-        closeBtn.setBorder(new LineBorder(new Color(150, 0, 0), 3));
+        closeBtn.setBackground(theme.getColor("dangerBackground"));
+        closeBtn.setForeground(theme.getColor("dangerText"));
+        closeBtn.setBorder(new LineBorder(theme.getColor("dangerBorder"), 3));
         closeBtn.addActionListener(e -> dispose());
 
         buttonPanel.add(saveBtn);
@@ -112,8 +113,8 @@ public class SettingsWindow extends JDialog
         JButton btn = new JButton(text);
         btn.setPreferredSize(new Dimension(120, 40));
         btn.setMaximumSize(new Dimension(120, 40));
-        btn.setBackground(Color.WHITE);
-        btn.setBorder(new LineBorder(Color.BLACK, 1));
+        btn.setBackground(theme.getColor("secondaryButtonBackground"));
+        btn.setBorder(new LineBorder(theme.getColor("borderColor"), 1));
         btn.setFocusPainted(false);
         return btn;
     }
@@ -134,9 +135,9 @@ public class SettingsWindow extends JDialog
         defaultDirField = new JTextField();
         browseDirBtn = new JButton("Browse");
 
-        defaultDirField.setBorder(new LineBorder(Color.BLACK, 2));
-        browseDirBtn.setBorder(new LineBorder(Color.BLACK, 2));
-        browseDirBtn.setBackground(Color.WHITE);
+        defaultDirField.setBorder(new LineBorder(theme.getColor("borderColor"), 2));
+        browseDirBtn.setBorder(new LineBorder(theme.getColor("borderColor"), 2));
+        browseDirBtn.setBackground(theme.getColor("secondaryButtonBackground"));
         
         browseDirBtn.addActionListener(e -> {
             try {
@@ -161,12 +162,12 @@ public class SettingsWindow extends JDialog
         // --- YT-DLP Path ---
         JLabel ytdlpLabel = new JLabel("YT-DLP Path:");
         ytdlpPathField = new JTextField();
-        ytdlpPathField.setBorder(new LineBorder(Color.BLACK, 2));
+        ytdlpPathField.setBorder(new LineBorder(theme.getColor("borderColor"), 2));
         ytdlpPathField.setToolTipText("Full path to the yt-dlp executable. Leave as yt-dlp to use your system PATH.");
         
         updateYTDLP = new JButton("Update yt-dlp");
-        updateYTDLP.setBorder(new LineBorder(Color.BLACK, 2));
-        updateYTDLP.setBackground(Color.WHITE);
+        updateYTDLP.setBorder(new LineBorder(theme.getColor("borderColor"), 2));
+        updateYTDLP.setBackground(theme.getColor("secondaryButtonBackground"));
         
         updateYTDLP.addActionListener(e -> updateYTDLP());
 
@@ -181,7 +182,7 @@ public class SettingsWindow extends JDialog
         // --- FFmpeg Path ---
         JLabel ffmpegLabel = new JLabel("FFmpeg Path:");
         ffmpegPathField = new JTextField();
-        ffmpegPathField.setBorder(new LineBorder(Color.BLACK, 2));
+        ffmpegPathField.setBorder(new LineBorder(theme.getColor("borderColor"), 2));
         ffmpegPathField.setToolTipText("Full path to the ffmpeg executable. Leave as ffmpeg to use your system PATH.");
 
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 1; gbc.weightx = 0;
@@ -192,7 +193,7 @@ public class SettingsWindow extends JDialog
         // --- Custom Flags ---
         JLabel customFlags = new JLabel("Custom Flags:");
         customFlagsField = new JTextField();
-        customFlagsField.setBorder(new LineBorder(Color.BLACK, 2));
+        customFlagsField.setBorder(new LineBorder(theme.getColor("borderColor"), 2));
         customFlagsField.setToolTipText("Extra yt-dlp flags added to the end of every command.");
 
         gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 1; gbc.weightx = 0;
@@ -205,10 +206,10 @@ public class SettingsWindow extends JDialog
         cookiesFileField = new JTextField();
         browseCookiesBtn = new JButton("Browse");
 
-        cookiesFileField.setBorder(new LineBorder(Color.BLACK, 2));
+        cookiesFileField.setBorder(new LineBorder(theme.getColor("borderColor"), 2));
         cookiesFileField.setToolTipText("Path to a cookies.txt file, for age restricted or members only videos. Can also name browser, chrome, safari or others");
-        browseCookiesBtn.setBorder(new LineBorder(Color.BLACK, 2));
-        browseCookiesBtn.setBackground(Color.WHITE);
+        browseCookiesBtn.setBorder(new LineBorder(theme.getColor("borderColor"), 2));
+        browseCookiesBtn.setBackground(theme.getColor("secondaryButtonBackground"));
 
         browseCookiesBtn.addActionListener(e -> {
             try {
@@ -246,10 +247,11 @@ public class SettingsWindow extends JDialog
         gbc.fill = GridBagConstraints.BOTH;
 
         JLabel themeLabel = new JLabel("Color Theme:");
-        String[] themes = {"Light", "Dark", "System Default"};
-        themeDropdown = new JComboBox<>(themes);
-        themeDropdown.setBorder(new LineBorder(Color.BLACK, 2));
-        themeDropdown.setBackground(Color.WHITE);
+        // Display names of every theme in the themes folder
+        themeDropdown = new JComboBox<>(theme.getThemeNames().toArray(new String[0]));
+        themeDropdown.setBorder(new LineBorder(theme.getColor("borderColor"), 2));
+        themeDropdown.setBackground(theme.getColor("secondaryButtonBackground"));
+        themeDropdown.setForeground(theme.getColor("secondaryButtonText"));
 
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0;
         panel.add(themeLabel, gbc);

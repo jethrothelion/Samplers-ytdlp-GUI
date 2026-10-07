@@ -31,6 +31,8 @@ public class DownloadGUI extends JFrame
     private JRadioButton lowestButton;
     private JLabel progressLabel;
     private JButton downloadBtn;
+    private JButton folderSelectButton;
+    private JPanel qualityPanel;
     TimelineRangeSelector timelineSelector;
 
     private JTextArea logArea;
@@ -49,6 +51,7 @@ public class DownloadGUI extends JFrame
     private boolean hasVerifiedExecutables = false; // Flag to prevent duplicate checks
 
     private DependencyLocator locator = DependencyLocator.getInstance();
+    private ThemeManager theme = ThemeManager.getInstance();
     private DownloadManager downloader;
     
     // prevent spamming yt-dlp processes
@@ -94,7 +97,7 @@ public class DownloadGUI extends JFrame
             JPanel gapPanel = new JPanel();
 
             JPanel folderWrapperPanel = new JPanel(new BorderLayout());
-            JButton folderSelectButton = new JButton("Select Folder");
+            folderSelectButton = new JButton("Select Folder");
             JLabel openFolderLabel = new JLabel("<html><a href=''>Open folder</a></html>");
             JPanel folderLinkPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
 
@@ -159,8 +162,6 @@ public class DownloadGUI extends JFrame
             savePrefBttn.addActionListener(e -> saveConfig());
 
             // URL input box
-            urlField.setBorder(new LineBorder(Color.BLACK, 2));
-            urlField.setForeground(Color.GRAY);    
             urlField.setPreferredSize(new Dimension(315, 60));
 
             urlDebounceTimer = new Timer(1000, e -> {
@@ -185,13 +186,13 @@ public class DownloadGUI extends JFrame
                 public void focusGained(java.awt.event.FocusEvent e) {
                     if (urlField.getText().equals("Enter URL")) {
                         urlField.setText("");
-                        urlField.setForeground(Color.BLACK);
+                        urlField.setForeground(theme.getColor("textBoxTextColor", Color.BLACK));
                     }
                 }
                 @Override
                 public void focusLost(java.awt.event.FocusEvent e) {
                     if (urlField.getText().isEmpty()) {
-                        urlField.setForeground(Color.GRAY);
+                        urlField.setForeground(theme.getColor("placeholderTextColor"));
                         urlField.setText("Enter URL");
                     }
                 }
@@ -209,10 +210,7 @@ public class DownloadGUI extends JFrame
             // Folder Select Button
             Icon folderIcon = locator.getIcon("folderIcon.png");
             folderSelectButton.setIcon(folderIcon);
-            folderSelectButton.setBorder(new LineBorder(Color.BLACK, 2));
             folderSelectButton.setFont(new Font("Arial", Font.PLAIN, 12));
-            folderSelectButton.setBackground(Color.WHITE);  
-            folderSelectButton.setForeground(Color.BLACK);
             folderSelectButton.setPreferredSize(new Dimension(110, 50));
             folderSelectButton.setMinimumSize(new Dimension(110, 50));
             folderSelectButton.addActionListener(e -> {
@@ -273,10 +271,7 @@ public class DownloadGUI extends JFrame
 
 
             // Download Button
-            downloadBtn.setForeground(new Color(0, 0, 0));
-            downloadBtn.setBorder(new LineBorder(new Color(0, 153, 51), 3));
             downloadBtn.setFont(new Font("Arial", Font.BOLD, 16));
-            downloadBtn.setBackground(Color.GREEN);
             downloadBtn.setPreferredSize(new Dimension(36, 30));
             downloadBtn.addActionListener(e -> startDownload(commandBar.getText()));
 
@@ -301,7 +296,6 @@ public class DownloadGUI extends JFrame
             add(commandWrapperPanel, gbc);
 
             // PROPERTIES
-            commandBar.setBorder(new LineBorder(Color.BLUE, 2));
             commandBar.setFont(new Font("Monospaced", Font.PLAIN, 14));
             
             commandScrollPane.setPreferredSize(new Dimension(400, 50));
@@ -330,7 +324,7 @@ public class DownloadGUI extends JFrame
             // --- ROW 2: Quality Panel & Timeline Range Selector ---
 
             // CREATION
-            JPanel qualityPanel = new JPanel();
+            qualityPanel = new JPanel();
             highestButton = new JRadioButton("Highest quality");
             mediumButton = new JRadioButton("Medium quality");
             lowestButton = new JRadioButton("Lowest quality");
@@ -355,7 +349,6 @@ public class DownloadGUI extends JFrame
             add(timelineSelector, gbc);
 
             // PROPERTIES
-            qualityPanel.setBorder(new LineBorder(Color.BLACK, 2));
             qualityPanel.setLayout(new BoxLayout(qualityPanel, BoxLayout.Y_AXIS));
             
             highestButton.setSelected(true); 
@@ -393,12 +386,10 @@ public class DownloadGUI extends JFrame
             add(statusContainer, gbc);
 
             // PROPERTIES
-            downloadMessage.setBorder(new LineBorder(Color.BLACK, 2));
             downloadMessage.setPreferredSize(new Dimension(100, 50));
             statusBox.add(statusLabel, BorderLayout.NORTH);
             statusBox.add(downloadMessage, BorderLayout.CENTER);
 
-            progressBar.setBorder(new LineBorder(Color.BLACK, 2));
             progressBar.setPreferredSize(new Dimension(400, 30));
             progressBox.add(progressLabel, BorderLayout.NORTH);
             progressBox.add(progressBar, BorderLayout.CENTER);
@@ -450,6 +441,7 @@ public class DownloadGUI extends JFrame
 
             // --- FINAL SETTING RUNNERS & INITIALIZATION ---
             
+            applyColors();
             runStartupChecks();
 
             constructCommand();
@@ -478,7 +470,7 @@ public class DownloadGUI extends JFrame
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             
-            g.setColor(new Color(0, 0, 0, 200)); 
+            g.setColor(theme.getColor("overlayColor"));
             g.fillRect(0, 0, getWidth(), getHeight());
         }
     };
@@ -491,7 +483,7 @@ public class DownloadGUI extends JFrame
     JLabel youInSettings = new JLabel("You are in the settings btw");
     youInSettings.setSize(300, 200);
     youInSettings.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 16));
-    youInSettings.setForeground(Color.PINK);
+    youInSettings.setForeground(theme.getColor("overlayTextColor"));
     dimmingPanel.add(youInSettings);
     
    // run settings window
@@ -503,6 +495,7 @@ public class DownloadGUI extends JFrame
     dimmingPanel.setVisible(false);
 
     readConfig();
+    reloadTheme();
     constructCommand();
     }
         
@@ -612,6 +605,36 @@ public class DownloadGUI extends JFrame
         cookiesFile = config.getProperty("cookiesFile", null);
 
         constructCommand();
+    }
+
+    // Sets every color that is given directly to a component, run at startup and again when the theme changes
+    public void applyColors()
+    {
+        urlField.setBorder(new LineBorder(theme.getColor("borderColor"), 2));
+        // Placeholder gray while "Enter URL" is showing, normal text color once something is typed
+        if (urlField.getText().equals("Enter URL")) urlField.setForeground(theme.getColor("placeholderTextColor"));
+        else urlField.setForeground(theme.getColor("textBoxTextColor", Color.BLACK));
+
+        folderSelectButton.setBorder(new LineBorder(theme.getColor("borderColor"), 2));
+        folderSelectButton.setBackground(theme.getColor("secondaryButtonBackground"));
+        folderSelectButton.setForeground(theme.getColor("secondaryButtonText"));
+
+        commandBar.setBorder(new LineBorder(theme.getColor("accentColor"), 2));
+        qualityPanel.setBorder(new LineBorder(theme.getColor("borderColor"), 2));
+        downloadMessage.setBorder(new LineBorder(theme.getColor("borderColor"), 2));
+        progressBar.setBorder(new LineBorder(theme.getColor("borderColor"), 2));
+
+        // Download button is green or red depending on whether a download is running
+        changeDownloadButton(!downloadBtn.getText().equals("ABORT"));
+    }
+
+    // Re-reads the selected theme and repaints the open window with it, no restart needed
+    public void reloadTheme()
+    {
+        theme.readTheme();
+        theme.applyTheme();
+        SwingUtilities.updateComponentTreeUI(this); // pulls the new UIManager colors into every existing component
+        applyColors();
     }
 
     private void setLogVisibility(boolean makeVisible) {
@@ -865,9 +888,9 @@ public class DownloadGUI extends JFrame
         {
 
             downloadBtn.setText("ABORT");
-            downloadBtn.setForeground(Color.white);
-            downloadBtn.setBackground(new Color(200, 0, 0));
-            downloadBtn.setBorder(new LineBorder(new Color(150, 0, 0), 3));
+            downloadBtn.setForeground(theme.getColor("dangerText"));
+            downloadBtn.setBackground(theme.getColor("dangerBackground"));
+            downloadBtn.setBorder(new LineBorder(theme.getColor("dangerBorder"), 3));
             downloadBtn.addActionListener(e ->
                 {downloader.abortDownload();
                 progressLabel.setText("Aborting or aborted");
@@ -878,9 +901,9 @@ public class DownloadGUI extends JFrame
         if(state == true)
         {
             downloadBtn.setText("DOWNLOAD");
-            downloadBtn.setForeground(new Color(0, 0, 0));
-            downloadBtn.setBackground(Color.GREEN);
-            downloadBtn.setBorder(new LineBorder(new Color(0, 153, 51), 3));
+            downloadBtn.setForeground(theme.getColor("successText"));
+            downloadBtn.setBackground(theme.getColor("successBackground"));
+            downloadBtn.setBorder(new LineBorder(theme.getColor("successBorder"), 3));
             downloadBtn.addActionListener(e -> {startDownload(commandBar.getText());});
         };
 

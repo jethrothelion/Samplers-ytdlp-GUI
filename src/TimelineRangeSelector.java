@@ -34,6 +34,8 @@ public class TimelineRangeSelector extends JPanel
     private final Timer holdTimer = new Timer(1000, e -> zoomIn());
     private int holdAnchorX = 0;
 
+    private ThemeManager theme = ThemeManager.getInstance();
+
     public TimelineRangeSelector() {
         setPreferredSize(new Dimension(500, 60));
         holdTimer.setRepeats(false);
@@ -222,7 +224,7 @@ public class TimelineRangeSelector extends JPanel
         int trackY = (getHeight() - trackHeight) / 2;
 
         // Draw the static grey bars at the extreme edges
-        g2d.setColor(Color.GRAY);
+        g2d.setColor(theme.getColor("timelineEndBar"));
         g2d.fillRect(0, endBarY, endBarWidth, endBarHeight);
         g2d.fillRect(getWidth() - endBarWidth, endBarY, endBarWidth, endBarHeight);
 
@@ -233,16 +235,16 @@ public class TimelineRangeSelector extends JPanel
         // Draw the background timeline track (Light Gray, Light Red when zoomed) offset by endBarWidth
         if (zoomed)
         {
-            g2d.setColor(new Color(255, 180, 180));
+            g2d.setColor(theme.getColor("timelineTrackZoomed"));
         }
         else
         {
-            g2d.setColor(Color.LIGHT_GRAY);
+            g2d.setColor(theme.getColor("timelineTrack"));
         }
         g2d.fillRect(endBarWidth, trackY, getWidth() - (2 * endBarWidth), trackHeight);
 
         // Draw the highlighted "selected" range between the two boxes (Blue), clipped to the visible track
-        g2d.setColor(new Color(100, 150, 255));
+        g2d.setColor(theme.getColor("timelineSelection"));
         int selectionStartX = Math.max(lX + boxWidth, endBarWidth);
         int selectionEndX = Math.min(rX, getWidth() - endBarWidth);
         if (selectionEndX > selectionStartX)
@@ -251,12 +253,12 @@ public class TimelineRangeSelector extends JPanel
         }
 
         // Draw the two draggable boxes (Dark Gray), skipping any zoomed out of view
-        g2d.setColor(Color.DARK_GRAY);
+        g2d.setColor(theme.getColor("timelineHandle"));
         if (leftVisible) g2d.fillRect(lX, centerY, boxWidth, boxHeight);
         if (rightVisible) g2d.fillRect(rX, centerY, boxWidth, boxHeight);
 
         // Draw the dynamic text above each box
-        g2d.setColor(Color.BLACK);
+        g2d.setColor(theme.getColor("timelineText"));
         g2d.setFont(new Font("Arial", Font.BOLD, 11));
         FontMetrics fm = g2d.getFontMetrics();
 
