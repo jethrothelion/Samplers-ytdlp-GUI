@@ -36,7 +36,7 @@ jobs:
           fi
 
       - name: Build jar
-        run: jar --create --file MyApp.jar --main-class Main -C bin .
+        run: jar --create --file Yt-DLP-GUI.jar --main-class Main -C bin .
 
       - name: Install WiX
         if: runner.os == 'Windows'
@@ -47,8 +47,8 @@ jobs:
         run: |
           jpackage \
             --input . \
-            --name MyApp \
-            --main-jar MyApp.jar \
+            --name Yt-DLP-GUI \
+            --main-jar Yt-DLP-GUI.jar \
             --main-class Main \
             --icon assets/YtDlp-GUI.png \
             --type app-image \
@@ -59,8 +59,8 @@ jobs:
         run: |
           jpackage `
             --input . `
-            --name MyApp `
-            --main-jar MyApp.jar `
+            --name Yt-DLP-GUI `
+            --main-jar Yt-DLP-GUI.jar `
             --main-class Main `
             --icon assets/YtDlp-GUI.ico `
             --type exe `
