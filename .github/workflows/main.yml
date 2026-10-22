@@ -52,7 +52,13 @@ jobs:
             --main-class Main \
             --icon assets/YtDlp-GUI.png \
             --type app-image \
-            --dest dist
+            --dest dist \
+            --vendor jethrothelion \
+            --description Video downloader, works on youtube or other online videos
+            --linux-package-name YTDLP-GUI \
+            --linux-shortcut \
+            --linux-menu-group Music \
+            
 
       - name: Package with jpackage (Windows)
         if: runner.os == 'Windows'
@@ -63,19 +69,17 @@ jobs:
             --main-jar Yt-DLP-GUI.jar `
             --main-class Main `
             --icon assets/YtDlp-GUI.ico `
+            --vendor jethrothelion `
+            --description Video downloader, works on youtube or other online video` `
             --type exe `
-            --dest dist
-
-      - name: Zip package
-        run: |
-          cd dist
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            7z a ../MyApp-${{ runner.os }}.zip *.exe
-          else
-            zip -r ../MyApp-${{ runner.os }}.zip MyApp
-          fi
-        shell: bash
-
+            --dest dist `
+            --app-version `
+            --win-shortcut `
+            --win-menu `
+            --win-shortcut-prompt
+            
+            
+            
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
@@ -94,4 +98,4 @@ jobs:
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/*.zip
+          files: artifacts/**/*.exe or artifacts/**/*.deb or artifacts/**/*.appimage
