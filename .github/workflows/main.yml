@@ -26,14 +26,26 @@ jobs:
       - name: Compile
         run: javac -d bin src/*.java
 
-      - name: Strip platform-specific binaries
+        
+      - name: Fetch yt-dlp and ffmpeg (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p bin
+          curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o bin/yt-dlp
+          curl -L https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz -o ffmpeg.tar.xz
+          tar -xf ffmpeg.tar.xz --strip-components=2 -C bin --wildcards '*/bin/ffmpeg' '*/bin/ffprobe'
+          rm ffmpeg.tar.xz
+          chmod +x bin/yt-dlp bin/ffmpeg bin/ffprobe
+
+      - name: Fetch yt-dlp and ffmpeg (Windows)
+        if: runner.os == 'Windows'
         shell: bash
         run: |
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            rm -f bin/ffmpeg bin/yt-dlp
-          else
-            rm -f bin/*.exe
-          fi
+          mkdir -p bin
+          curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -o bin/yt-dlp.exe
+          curl -L https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip -o ffmpeg.zip
+          unzip -q -j ffmpeg.zip '*/bin/ffmpeg.exe' '*/bin/ffprobe.exe' -d bin
+          rm ffmpeg.zip
 
       - name: Build jar
         run: jar --create --file Yt-DLP-GUI.jar --main-class Main -C bin .
