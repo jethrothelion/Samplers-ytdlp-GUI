@@ -23,6 +23,15 @@ jobs:
           java-version: '25'
       - run: java --version
 
+      - name: Get version
+        shell: bash
+        run: |
+          if [[ "GITHUB_REF" == refs/tags/v*]]; then
+            echo "APP_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          else
+            echo "APP_VERSION=0.0.1" >> "GITHUB_ENV"
+          fi
+
       - name: Compile
         run: javac -d bin src/*.java
 
@@ -69,7 +78,7 @@ jobs:
             --type app-image \
             --dest dist \
             --vendor jethrothelion \
-            --description Video downloader, works on youtube or other online videos
+            --description "Video downloader, works on youtube or other online videos" \
             --linux-package-name YTDLP-GUI \
             --linux-shortcut \
             --linux-menu-group Music \
@@ -85,7 +94,7 @@ jobs:
             --main-class Main `
             --icon assets/YtDlp-GUI.ico `
             --vendor jethrothelion `
-            --description Video downloader, works on youtube or other online video` `
+            --description "Video downloader, works on youtube or other online video" `
             --type exe `
             --dest dist `
             --app-version `
