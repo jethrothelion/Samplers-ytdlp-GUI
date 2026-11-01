@@ -52,7 +52,10 @@ jobs:
 
       - name: Install WiX
         if: runner.os == 'Windows'
-        run: dotnet tool install --global wix
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          wix extension add --global WixToolset.UI.wixext/5.0.2
+          wix extension add --global WixToolset.Util.wixext/5.0.2
 
       - name: Package with jpackage (Linux)
         if: runner.os == 'Linux'
