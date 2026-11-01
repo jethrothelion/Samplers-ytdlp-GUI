@@ -75,7 +75,7 @@ jobs:
             --main-jar Yt-DLP-GUI.jar \
             --main-class Main \
             --icon assets/YtDlp-GUI.png \
-            --type app-image \
+            --type deb \
             --dest dist \
             --vendor jethrothelion \
             --description "Video downloader, works on youtube or other online videos" \
@@ -112,14 +112,23 @@ jobs:
 
   release:
     needs: build
+    # Only publish for tag pushes; manual runs just build
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
-
+          merge-multiple: true
+ 
+      - name: List what we got
+        run: ls -la artifacts
+ 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/*.exe or artifacts/**/*.deb or artifacts/**/*.appimage
+          files: |
+            artifacts/*.exe
+            artifacts/*.deb
+ 
