@@ -25,6 +25,32 @@ A timeline that visualizes the section the user would like to download.
 
 Config saving, saves weather you want to use audio or video, what level quality, weather you want to see the console output or not and also saves the dimensions of the window
 
+## THEMES!! 
+
+<details>
+<summary><b>🎨 View all themes</b></summary>
+<br>
+
+<table>
+  <tr>
+    <td align="center"><img src="assets/lightSample.png" width="250"><br><b>Light</b></td>
+    <td align="center"><img src="assets/darkSample.png" width="250"><br><b>Dark</b></td>
+    <td align="center"><img src="assets/midnightSample.png" width="250"><br><b>Midnight</b></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/forestSample.png" width="250"><br><b>Forest</b></td>
+    <td align="center"><img src="assets/mintSample.png" width="250"><br><b>Mint</b></td>
+    <td align="center"><img src="assets/crimsonSample.png" width="250"><br><b>Crimson</b></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/brughandySample.png" width="250"><br><b>Burgundy</b></td>
+    <td align="center"><img src="assets/pinkSample.png" width="250"><br><b>Pink</b></td>
+    <td align="center"><img src="assets/bubblegumSample.png" width="250"><br><b>Bubblegum</b></td>
+  </tr>
+</table>
+
+</details>
+
 ## Running from source
 
 You can also run it from source but you need to have ffmpeg and ytdlp for your os either in your path or in the classes path
