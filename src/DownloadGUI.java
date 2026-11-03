@@ -156,7 +156,7 @@ public class DownloadGUI extends JFrame
             Image scaledSaveImg = originalSaveIcon.getImage().getScaledInstance(30, 25, Image.SCALE_SMOOTH);
             Icon saveIcon = new ImageIcon(scaledSaveImg);
             savePrefBttn.setIcon(saveIcon);
-            savePrefBttn.setMargin(new Insets(0, 0, 0, 0)); // CHANGED: Removes default inner button padding to shrink width/height
+            savePrefBttn.setMargin(new Insets(0, 0, 0, 0)); 
             savePrefBttn.setPreferredSize(new Dimension(30, 25));
             settingsButtonPanel.add(savePrefBttn);
             savePrefBttn.addActionListener(e -> saveConfig());
