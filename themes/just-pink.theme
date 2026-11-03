@@ -1,0 +1,27 @@
+Just Pink
+borderColor=255,20,147
+accentColor=0,255,255
+placeholderTextColor=200,160,220
+secondaryButtonBackground=75,30,105
+secondaryButtonText=255,235,250
+successBackground=20,150,60
+successText=255,255,255
+successBorder=57,255,20
+dangerBackground=255,40,80
+dangerText=255,255,255
+dangerBorder=255,150,180
+overlayColor=30,8,50,230
+overlayTextColor=255,120,220
+sidebarBackground=38,12,60
+timelineEndBar=190,100,200
+timelineTrack=85,40,115
+timelineTrackZoomed=130,50,150
+timelineSelection=255,20,147
+timelineHandle=0,255,255
+timelineText=255,235,250
+backgroundColor=52,18,80
+textColor=255,235,250
+textBoxBackground=70,28,105
+textBoxTextColor=255,240,252
+buttonBackground=255,20,147
+buttonTextColor=255,255,255
