@@ -1,0 +1,80 @@
+THIRD-PARTY NOTICES
+===================
+
+Yt-DLP-GUI is licensed under the GNU General Public License v3.0 (see LICENSE).
+
+The installers and packages for Yt-DLP-GUI include the third-party software
+listed below. Each component remains under its own license, and nothing in
+Yt-DLP-GUI's license changes the terms of these components. Yt-DLP-GUI is not
+affiliated with or endorsed by any of these projects.
+
+The exact versions bundled in each release are listed in VERSIONS.txt,
+included in the same package.
+
+
+-------------------------------------------------------------------------------
+1. yt-dlp
+-------------------------------------------------------------------------------
+
+Files:        yt-dlp (Linux), yt-dlp.exe (Windows)
+Project:      https://github.com/yt-dlp/yt-dlp
+License:      The Unlicense (public domain dedication)
+              https://github.com/yt-dlp/yt-dlp/blob/master/LICENSE
+Source:       https://github.com/yt-dlp/yt-dlp
+
+The standalone yt-dlp executable also bundles third-party components, such as
+the Python runtime and its libraries, under their own licenses. Those licenses
+are listed in THIRD_PARTY_LICENSES.txt, published with each yt-dlp release:
+https://github.com/yt-dlp/yt-dlp/releases
+
+
+-------------------------------------------------------------------------------
+2. FFmpeg and FFprobe
+-------------------------------------------------------------------------------
+
+Files:        ffmpeg, ffprobe (Linux), ffmpeg.exe, ffprobe.exe (Windows)
+Project:      https://ffmpeg.org
+Build:        GPL build from yt-dlp/FFmpeg-Builds
+              https://github.com/yt-dlp/FFmpeg-Builds
+License:      GNU General Public License v3.0
+              https://ffmpeg.org/legal.html
+              The license text is included as FFMPEG_LICENSE.txt.
+
+Source code:  The complete source code for the bundled FFmpeg, including the
+              build scripts and the external libraries compiled into it, is
+              available from:
+                - FFmpeg source:  https://ffmpeg.org/download.html#get-sources
+                - Build scripts and the exact build used:
+                  https://github.com/yt-dlp/FFmpeg-Builds/releases
+
+              The exact FFmpeg version and build bundled in this release are
+              listed in VERSIONS.txt. If you cannot get the source code from
+              the links above, open an issue at
+              https://github.com/jethrothelion/Samplers-ytdlp-GUI/issues
+              and a copy will be provided.
+
+FFmpeg is a trademark of Fabrice Bellard, originator of the FFmpeg project.
+
+
+-------------------------------------------------------------------------------
+3. Java Runtime (Eclipse Temurin / OpenJDK)
+-------------------------------------------------------------------------------
+
+Files:        The bundled Java runtime in the "runtime" folder of the
+              installed application (Windows and Linux installers only;
+              the standalone .jar uses your own Java installation)
+Project:      Eclipse Temurin, https://adoptium.net
+License:      GNU General Public License v2.0 with the Classpath Exception
+              https://openjdk.org/legal/gplv2+ce.html
+Source:       https://github.com/adoptium/jdk
+Notices:      The full license and third-party notices for the runtime are
+              included in the runtime's "legal" folder.
+
+Java and OpenJDK are trademarks or registered trademarks of Oracle and/or its
+affiliates.
+
+
+-------------------------------------------------------------------------------
+
+Every component is provided by its authors "AS IS", without warranty of any
+kind. See each component's license for the full terms.
