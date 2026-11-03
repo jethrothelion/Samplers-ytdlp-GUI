@@ -9,6 +9,10 @@ on:
 permissions:
   contents: write
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
     strategy:
@@ -16,82 +20,132 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-java@v6
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '25'
       - run: java --version
 
-      - name: Compile
-        run: javac -d bin src/*.java
-
-      - name: Strip platform-specific binaries
-        shell: bash
+      - name: Get version
         run: |
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            rm -f bin/ffmpeg bin/yt-dlp
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "APP_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
           else
-            rm -f bin/*.exe
+            echo "APP_VERSION=0.0.1" >> "$GITHUB_ENV"
           fi
 
-      - name: Build jar
-        run: jar --create --file MyApp.jar --main-class Main -C bin .
+      - name: Compile
+        run: javac -d classes src/*.java
+
+      - name: Fetch yt-dlp and ffmpeg (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p bin
+          curl -fL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o bin/yt-dlp
+          curl -fL https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz -o ffmpeg.tar.xz
+          tar -xf ffmpeg.tar.xz --strip-components=2 -C bin --wildcards '*/bin/ffmpeg' '*/bin/ffprobe'
+          rm ffmpeg.tar.xz
+          chmod +x bin/yt-dlp bin/ffmpeg bin/ffprobe
+
+      - name: Fetch yt-dlp and ffmpeg (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          mkdir -p bin
+          curl -fL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -o bin/yt-dlp.exe
+          curl -fL https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip -o ffmpeg.zip
+          unzip -q -j ffmpeg.zip '*/bin/ffmpeg.exe' '*/bin/ffprobe.exe' -d bin
+          rm ffmpeg.zip
+
+      - name: Build jar and stage app files
+        run: |
+          mkdir -p package
+          cp assets/*.png classes/
+          jar --create --file package/Yt-DLP-GUI.jar --main-class Main -C classes .
+          cp bin/* package/
+
+      - name: Verify jar contents
+        run: |
+          jar tf package/Yt-DLP-GUI.jar | tr -d '\r' > jar-contents.txt
+          missing=0
+          grep -qxF "Main.class" jar-contents.txt || { echo "Missing from jar: Main.class"; missing=1; }
+          while IFS= read -r f; do
+            if ! grep -qxF "$f" jar-contents.txt; then
+              echo "Missing from jar: $f"
+              missing=1
+            fi
+          done < <(find assets -type f)
+          if [ "$missing" -eq 0 ]; then echo "All assets found in jar"; fi
+          exit $missing
 
       - name: Install WiX
         if: runner.os == 'Windows'
-        run: dotnet tool install --global wix
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          wix extension add --global WixToolset.UI.wixext/5.0.2
+          wix extension add --global WixToolset.Util.wixext/5.0.2
 
       - name: Package with jpackage (Linux)
         if: runner.os == 'Linux'
         run: |
           jpackage \
-            --input . \
-            --name MyApp \
-            --main-jar MyApp.jar \
+            --input package \
+            --name Yt-DLP-GUI \
+            --main-jar Yt-DLP-GUI.jar \
             --main-class Main \
+            --app-version "$APP_VERSION" \
             --icon assets/YtDlp-GUI.png \
-            --type app-image \
-            --dest dist
+            --type deb \
+            --dest dist \
+            --vendor jethrothelion \
+            --description "Video downloader, works on youtube or other online videos" \
+            --linux-package-name yt-dlp-gui \
+            --linux-shortcut \
+            --linux-menu-group AudioVideo
 
       - name: Package with jpackage (Windows)
         if: runner.os == 'Windows'
         run: |
-          jpackage `
-            --input . `
-            --name MyApp `
-            --main-jar MyApp.jar `
-            --main-class Main `
-            --icon assets/YtDlp-GUI.ico `
-            --type exe `
-            --dest dist
-
-      - name: Zip package
-        run: |
-          cd dist
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            7z a ../MyApp-${{ runner.os }}.zip *.exe
-          else
-            zip -r ../MyApp-${{ runner.os }}.zip MyApp
-          fi
-        shell: bash
+          jpackage \
+            --input package \
+            --name Yt-DLP-GUI \
+            --main-jar Yt-DLP-GUI.jar \
+            --main-class Main \
+            --app-version "$APP_VERSION" \
+            --icon assets/YtDlp-GUI.ico \
+            --vendor jethrothelion \
+            --description "Video downloader, works on youtube or other online videos" \
+            --type exe \
+            --dest dist \
+            --win-shortcut \
+            --win-menu \
+            --win-shortcut-prompt
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MyApp-${{ runner.os }}
-          path: MyApp-${{ runner.os }}.zip
+          name: Yt-DLP-GUI-${{ runner.os }}
+          path: dist/*
+          if-no-files-found: error
 
   release:
     needs: build
+    # Only publish for tag pushes; manual runs just build
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
+          merge-multiple: true
+
+      - name: List what we got
+        run: ls -la artifacts
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/*.zip
+          files: |
+            artifacts/*.exe
+            artifacts/*.deb
