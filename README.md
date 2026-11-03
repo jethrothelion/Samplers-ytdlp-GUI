@@ -12,6 +12,8 @@ Download the release for your specified version and run the installer file
 
 The Windows and Linux installers include everything you need: yt-dlp, ffmpeg and Java are all bundled.
 
+The jar is universal and small file size but doesnt include ffmpeg, yt-dlp or java 
+
 After you paste a link, give it a second. The app fetches the video's duration before the timeline updates.
 
 installs to program files on windows or opt on linux
