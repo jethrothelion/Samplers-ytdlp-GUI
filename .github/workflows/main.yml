@@ -62,6 +62,7 @@ jobs:
           mkdir -p package
           cp assets/*.png classes/
           jar --create --file package/Yt-DLP-GUI.jar --main-class Main -C classes .
+          cp -r themes package/
           cp bin/* package/
 
       - name: Install WiX
