@@ -65,6 +65,14 @@ jobs:
           cp -r themes package/
           cp bin/* package/
 
+
+      - name: Upload portable artifact
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Yt-DLP-GUI-jar
+          path: package/Yt-DLP-GUI.jar
+
       - name: Install WiX
         if: runner.os == 'Windows'
         run: |
@@ -88,7 +96,8 @@ jobs:
             --description "Video downloader, works on youtube or other online videos" \
             --linux-package-name yt-dlp-gui \
             --linux-shortcut \
-            --linux-menu-group AudioVideo
+            --linux-menu-group AudioVideo \
+            --license-file LICENSE 
 
       - name: Package with jpackage (Windows)
         if: runner.os == 'Windows'
@@ -106,7 +115,8 @@ jobs:
             --dest dist \
             --win-shortcut \
             --win-menu \
-            --win-shortcut-prompt
+            --win-shortcut-prompt \
+            --license-file LICENSE 
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -136,3 +146,4 @@ jobs:
           files: |
             artifacts/*.exe
             artifacts/*.deb
+            artifacts/*.jar
