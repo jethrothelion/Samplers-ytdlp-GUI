@@ -27,8 +27,8 @@ Config saving, saves weather you want to use audio or video, what level quality,
 
 ## THEMES!! 
 
-<details>
-<summary><b>🎨 View all themes</b></summary> <details open>
+<details open>
+<summary><b>🎨 View all themes</b></summary>
 <br>
 
 <table>
@@ -49,7 +49,7 @@ Config saving, saves weather you want to use audio or video, what level quality,
   </tr>
 </table>
 
-</details>
+</details><details open>
 
 ## Running from source
 
