@@ -1,6 +1,6 @@
 ## Overview
 
-![Sample Image showing GUI](showcase/darkThemeSample)
+![Sample Image showing GUI](showcase/pinkSample)
 
 Simple YtDLP GUI using java swing. has full access to ytdlp command suite by typing in manually while the buttons and text fields take care of simple usages. Also includes a timeline that will allow you to specify a specific time frame of the video to download
 
