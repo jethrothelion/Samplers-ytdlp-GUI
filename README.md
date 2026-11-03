@@ -28,24 +28,24 @@ Config saving, saves weather you want to use audio or video, what level quality,
 ## THEMES!! 
 
 <details>
-<summary><b>🎨 View all themes</b></summary>
+<summary><b>🎨 View all themes</b></summary> <details open>
 <br>
 
 <table>
   <tr>
-    <td align="center"><img src="assets/lightSample.png" width="250"><br><b>Light</b></td>
-    <td align="center"><img src="assets/darkSample.png" width="250"><br><b>Dark</b></td>
-    <td align="center"><img src="assets/midnightSample.png" width="250"><br><b>Midnight</b></td>
+    <td align="center"><img src="showcase/lightSample.png" width="250"><br><b>Light</b></td>
+    <td align="center"><img src="showcase/darkSample.png" width="250"><br><b>Dark</b></td>
+    <td align="center"><img src="showcase/midnightSample.png" width="250"><br><b>Midnight</b></td>
   </tr>
   <tr>
-    <td align="center"><img src="assets/forestSample.png" width="250"><br><b>Forest</b></td>
-    <td align="center"><img src="assets/mintSample.png" width="250"><br><b>Mint</b></td>
-    <td align="center"><img src="assets/crimsonSample.png" width="250"><br><b>Crimson</b></td>
+    <td align="center"><img src="showcase/forestSample.png" width="250"><br><b>Forest</b></td>
+    <td align="center"><img src="showcase/mintSample.png" width="250"><br><b>Mint</b></td>
+    <td align="center"><img src="showcase/crimsonSample.png" width="250"><br><b>Crimson</b></td>
   </tr>
   <tr>
-    <td align="center"><img src="assets/brughandySample.png" width="250"><br><b>Burgundy</b></td>
-    <td align="center"><img src="assets/pinkSample.png" width="250"><br><b>Pink</b></td>
-    <td align="center"><img src="assets/bubblegumSample.png" width="250"><br><b>Bubblegum</b></td>
+    <td align="center"><img src="showcase/brughandySample.png" width="250"><br><b>Burgundy</b></td>
+    <td align="center"><img src="showcase/pinkSample.png" width="250"><br><b>Pink</b></td>
+    <td align="center"><img src="showcase/bubblegumSample.png" width="250"><br><b>Bubblegum</b></td>
   </tr>
 </table>
 
