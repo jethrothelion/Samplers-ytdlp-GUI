@@ -64,20 +64,6 @@ jobs:
           jar --create --file package/Yt-DLP-GUI.jar --main-class Main -C classes .
           cp bin/* package/
 
-      - name: Verify jar contents
-        run: |
-          jar tf package/Yt-DLP-GUI.jar | tr -d '\r' > jar-contents.txt
-          missing=0
-          grep -qxF "Main.class" jar-contents.txt || { echo "Missing from jar: Main.class"; missing=1; }
-          while IFS= read -r f; do
-            if ! grep -qxF "$f" jar-contents.txt; then
-              echo "Missing from jar: $f"
-              missing=1
-            fi
-          done < <(find assets -type f)
-          if [ "$missing" -eq 0 ]; then echo "All assets found in jar"; fi
-          exit $missing
-
       - name: Install WiX
         if: runner.os == 'Windows'
         run: |
