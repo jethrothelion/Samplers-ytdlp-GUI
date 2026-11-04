@@ -1,6 +1,6 @@
 ## Overview
 
-Simple java swing GUI for [yt-dlp](https://github.com/yt-dlp/yt-dlp). lets you download only part of the video
+Simple java swing GUI for [yt-dlp](https://github.com/yt-dlp/yt-dlp). easily lets you download only part of the video
 
 ![Yt-DLP-GUI with the Just Pink theme](showcase/pinkSample.png)
 
