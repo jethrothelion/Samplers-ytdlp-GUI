@@ -903,9 +903,9 @@ public class DownloadGUI extends JFrame
         if(state == true)
         {
             downloadBtn.setText("DOWNLOAD");
-            downloadBtn.setForeground(theme.getColor("successText"));
-            downloadBtn.setBackground(theme.getColor("successBackground"));
-            downloadBtn.setBorder(new LineBorder(theme.getColor("successBorder"), 3));
+            downloadBtn.setForeground(theme.getColor("downloadText"));
+            downloadBtn.setBackground(theme.getColor("downloadBackground"));
+            downloadBtn.setBorder(new LineBorder(theme.getColor("downloadBorder"), 3));
             downloadBtn.addActionListener(e -> {startDownload(commandBar.getText());});
         };
 
