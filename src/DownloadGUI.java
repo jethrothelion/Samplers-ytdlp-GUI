@@ -167,6 +167,7 @@ public class DownloadGUI extends JFrame
             urlDebounceTimer = new Timer(1000, e -> {
                 if (urlField.getText().contains("youtube.com"))
                 {
+                    logArea.append("Fetching video duration\n");
                     fetchVideoDuration(urlField.getText()); 
                 }
             });
@@ -760,6 +761,7 @@ public class DownloadGUI extends JFrame
                     // get() retrieves the return value from doInBackground()
                     int fetchedDuration = get();
                     if (fetchedDuration != -1) {
+                        logArea.append("Video length = " + fetchedDuration + "\n"); 
                         videoDuration = fetchedDuration;
                         timelineSelector.setVideoDuration(videoDuration);
                     }
